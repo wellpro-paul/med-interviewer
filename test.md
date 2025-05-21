@@ -44,6 +44,25 @@ This document summarizes the approach to testing for the Conversational Medical 
     - Multiple attempts to mock `useRef`, `Element.prototype.scrollIntoView`, and `useEffect` did not resolve the issue.
     - This may require a different testing strategy or more advanced setup for Material UI components.
 
+## Future Tests for Hybrid Scoring System
+- **Scoring UI rendering:** Ensure the 0–4 scale is shown at the correct time in the chat flow.
+- **Accessibility:** Verify that scoring buttons are keyboard and screen-reader accessible.
+- **Score collection:** Test that selected scores are correctly stored per symptom.
+- **Section and grand total calculation:** Test that section and overall totals are calculated and displayed correctly.
+- **Export logic:** Test that scores are included in Markdown and FHIR exports.
+- **LLM prompt/response:** Test that the AI prompts for a score, explains the scale, and handles ambiguous or missing input appropriately.
+
+## Future Tests for Markdown-to-FHIR Conversion Script
+- Test that various markdown formats (with/without sections, different question formats) are parsed correctly.
+- Test that the output is valid FHIR Questionnaire JSON.
+- Test that edge cases (missing sections, malformed questions, extra whitespace) are handled gracefully.
+
+## Future Tests for Navigation and Import Workflow
+- Test that navigation between pages (Import, Chat, Logs) works as expected.
+- Test that questionnaire import (FHIR/Markdown) is robust and errors are handled gracefully.
+- Test that state (loaded questionnaire) is preserved between pages and after refresh.
+- Test that logs are accessible and manageable from the Logs page.
+
 ## Summary of Remaining Issues
 - **App.test.tsx:**
   - Fails to render the main component in the test environment due to ref and DOM mocking issues with Material UI and Emotion.
