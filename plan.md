@@ -1,31 +1,32 @@
 # Project Plan: Conversational Medical Intake App
 
 ## Overview
-A React-based web app that interviews patients using natural language, powered by an LLM (OpenAI or Gemini). The app will mimic a medical intake questionnaire (inspired by MSQ) but use a conversational, adaptive chat interface. It will run locally for rapid prototyping, with future plans for cloud deployment and integration with Medplum/HL7 FHIR.
+A React-based web app that interviews patients using natural language, powered by an LLM (OpenAI or Gemini). The app mimics a medical intake questionnaire (inspired by MSQ) but uses a conversational, adaptive chat interface. It runs locally for rapid prototyping, with future plans for cloud deployment and integration with Medplum/HL7 FHIR.
 
 ## Phases & Milestones
 
 ### Phase 1: Prototype Core Experience
-- [ ] Set up React app with Material UI (or similar) for polished, responsive chat UI
-- [ ] Integrate with LLM API (OpenAI/Gemini) for conversational flow
-- [ ] Implement adaptive question flow inspired by MSQ
-- [ ] Store responses and chat logs locally (localStorage/IndexedDB), grouped by day/session
-- [ ] Export results as Markdown (with LOINC mapping where possible)
-- [ ] **Implement multi-page navigation:**
+- [x] Set up React app with Material UI (or similar) for polished, responsive chat UI
+- [x] Integrate with LLM API (OpenAI/Gemini) for conversational flow
+- [x] Implement adaptive question flow inspired by MSQ
+- [x] Store responses and chat logs locally (localStorage/IndexedDB), grouped by day/session
+- [x] Export results as Markdown (with LOINC mapping where possible)
+- [x] **Implement multi-page navigation:**
     - Questionnaire Import page (paste/upload FHIR JSON or Markdown, transform and load)
     - Chat Interview page (driven by loaded questionnaire)
     - Logs page (view/download/delete logs)
-- [ ] **Implement questionnaire import workflow:**
-    - Transform Markdown to FHIR JSON in the UI
+- [x] **Implement questionnaire import workflow:**
+    - Transform Markdown to FHIR JSON in the UI using Gemini LLM (LLM-powered, not regex)
     - Validate and load FHIR JSON
     - Store loaded questionnaire in app state
-- [ ] End Chat button disables input, saves log, triggers FHIR export, and resets for new chat
-- [ ] Post-chat LOINC/FHIR export: After chat ends, send transcript to Gemini 2.5 to generate FHIR QuestionnaireResponse JSON (with LOINC codes where possible)
-- [ ] Store and view FHIR JSON alongside Markdown logs in Logs page
-- [ ] Basic scaffolding for voice input/output (VAPI-ready)
-- [ ] Enhance system prompt with domain-specific rules (e.g., biological relatives for family history, clarify ambiguous answers, etc.)
-- [ ] **Update documentation:** Revise README, architecture, and test documentation to reflect the new navigation and import workflow.
-- [ ] **Plan for future tests:** List future tests for navigation, import, and state management in test.md.
+- [x] Automatic log saving: At interview completion, the app saves both Markdown and FHIR JSON logs (no explicit End Chat button required)
+- [x] Post-chat LOINC/FHIR export: After chat ends, send transcript to Gemini 2.5 to generate FHIR QuestionnaireResponse JSON (with LOINC codes where possible)
+- [x] Store and view FHIR JSON alongside Markdown logs in Logs page
+- [x] Navigation tabs are always in sync with the current route, even after programmatic navigation
+- [x] Basic scaffolding for voice input/output (VAPI-ready)
+- [x] Enhance system prompt with domain-specific rules (e.g., biological relatives for family history, clarify ambiguous answers, etc.)
+- [x] **Update documentation:** README, architecture, and test documentation reflect the new navigation, import workflow, and log management.
+- [x] **Plan for future tests:** Placeholders for navigation, import, state management, LLM-powered Markdown-to-FHIR, and log management in test.md.
 
 ### Phase 2: Enhanced Features
 - [ ] Improve LOINC mapping and question coverage
@@ -46,7 +47,7 @@ A React-based web app that interviews patients using natural language, powered b
 ## Milestones
 - **M1:** Multi-page navigation and import workflow (Questionnaire Import, Chat Interview, Logs)
 - **M2:** Hybrid scoring system for MSQ (per-symptom, section, and grand total scoring with UI and LLM integration)
-- **M3:** Markdown-to-FHIR conversion script for admin import of freeform questionnaires
+- **M3:** LLM-powered Markdown-to-FHIR conversion for admin import of freeform questionnaires
 - **M4:** Voice scaffolding, improved LOINC mapping, import/export, custom questionnaire upload/ingestion, multi-session support, ValueSet/LOINC mapping for imported questionnaires
 - **M5:** Medplum/cloud integration, FHIR enhancements, authentication
 
@@ -54,4 +55,5 @@ A React-based web app that interviews patients using natural language, powered b
 - Production authentication/logging
 - Full Medplum integration
 - Multi-language support
-- Advanced analytics 
+- Advanced analytics
+- Note: Large Markdown questionnaires may require chunking for LLM conversion. 

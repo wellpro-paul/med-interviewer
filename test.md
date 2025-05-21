@@ -52,16 +52,34 @@ This document summarizes the approach to testing for the Conversational Medical 
 - **Export logic:** Test that scores are included in Markdown and FHIR exports.
 - **LLM prompt/response:** Test that the AI prompts for a score, explains the scale, and handles ambiguous or missing input appropriately.
 
-## Future Tests for Markdown-to-FHIR Conversion Script
-- Test that various markdown formats (with/without sections, different question formats) are parsed correctly.
-- Test that the output is valid FHIR Questionnaire JSON.
-- Test that edge cases (missing sections, malformed questions, extra whitespace) are handled gracefully.
+## Future Tests for LLM-powered Markdown-to-FHIR Conversion
+- **Success cases:** Test that Markdown is correctly converted to FHIR JSON for typical questionnaires. _(not yet implemented)_
+- **Error handling:** Test that errors from Gemini (invalid JSON, code fencing, etc.) are handled gracefully and shown in the UI. _(not yet implemented)_
+- **Chunking/large input:** Test that large Markdown questionnaires are chunked and merged correctly, or that the UI provides guidance. _(not yet implemented)_
+
+## Future Tests for Automatic Log Saving
+- **At chat completion:** Test that logs (Markdown and FHIR JSON) are saved automatically when the interview is complete. _(not yet implemented)_
+- **Error handling:** Test that Markdown is saved even if FHIR export fails. _(not yet implemented)_
+
+## Future Tests for Logs Page
+- **View:** Test that Markdown and FHIR logs can be viewed in a dialog. _(not yet implemented)_
+- **Download:** Test that logs can be downloaded in the correct format. _(not yet implemented)_
+- **Delete:** Test that logs can be deleted and the UI updates. _(not yet implemented)_
+- **Error handling:** Test that the UI handles missing or corrupted logs gracefully. _(not yet implemented)_
 
 ## Future Tests for Navigation and Import Workflow
-- Test that navigation between pages (Import, Chat, Logs) works as expected.
-- Test that questionnaire import (FHIR/Markdown) is robust and errors are handled gracefully.
-- Test that state (loaded questionnaire) is preserved between pages and after refresh.
-- Test that logs are accessible and manageable from the Logs page.
+- **Tab sync:** Test that navigation tabs always match the current route, even after programmatic navigation. _(not yet implemented)_
+- **Navigation:** Test that navigation between pages (Import, Chat, Logs) works as expected. _(not yet implemented)_
+- **Import:** Test that questionnaire import (FHIR/Markdown) is robust and errors are handled gracefully. _(not yet implemented)_
+- **State preservation:** Test that state (loaded questionnaire) is preserved between pages and after refresh. _(not yet implemented)_
+- **Logs accessibility:** Test that logs are accessible and manageable from the Logs page. _(not yet implemented)_
+- **Large questionnaire edge cases:** Test that very large Markdown files are handled or chunked as needed. _(not yet implemented)_
+
+## Future E2E/Integration Tests
+- **Full workflow:** Test the complete user flow from import to chat to log export and review. _(not yet implemented)_
+- **Accessibility:** Test keyboard navigation and screen reader support for all major UI elements. _(not yet implemented)_
+- **Voice input/output:** Test voice scaffolding when implemented. _(not yet implemented)_
+- **Medplum/cloud integration:** Test cloud export and authentication when implemented. _(not yet implemented)_
 
 ## Summary of Remaining Issues
 - **App.test.tsx:**
