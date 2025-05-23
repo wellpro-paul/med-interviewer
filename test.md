@@ -177,4 +177,23 @@ This document summarizes the approach to testing for the Conversational Medical 
 ## Recommendations
 - Focus on utility and service function tests for robust coverage.
 - For complex UI (especially with Material UI), consider integration tests in a real browser environment (e.g., Cypress, Playwright) or break components into smaller, more testable units.
-- Revisit main component tests if/when the test environment or component structure changes. 
+- Revisit main component tests if/when the test environment or component structure changes.
+
+## Key Update: Prompt Customization (2024-06)
+- LLM prompts for Markdown-to-FHIR conversion, FHIR export, and conversational phrasing are now loaded from editable text files in `src/prompts/`.
+- Test that editing these files changes the app's LLM behavior as expected.
+- (Future) Test in-app prompt editing UI when implemented.
+
+## Download All Logs (zip)
+- Test that the 'Download All Logs' button on the Logs page downloads a zip file containing all session logs.
+- Test that each file in the zip is named with the ISO date, time, and questionnaire title for easy sorting.
+- Test that both Markdown and FHIR JSON are included for each session.
+
+## Debug: End Chat Early
+- Test that clicking the 'End Chat Early' button ends the chat, saves the partial log, and displays the completion UI.
+- Test that the partial session is saved and appears in the Logs page.
+- Test that normal sessions still auto-save at completion.
+
+## Future Tests for Prompt Editing UI
+- Test that an admin can edit LLM prompt files from the UI (when implemented).
+- Test that changes made in the UI are reflected in the app's LLM behavior. 

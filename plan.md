@@ -127,4 +127,7 @@ A React-based web app that interviews patients using natural language, powered b
 - The navigation order is: Home, Import, Catalog, Chat, Logs.
 - The Import Page is for adding new questionnaires (Markdown, FHIR JSON, or PDF), converting, and saving to the catalog. All controls are above the text box. No 'Import for Chat' button.
 - The Catalog Page lists all saved questionnaires and allows starting a new chat/interview for each entry ("Start Chat" button). Editing, renaming, deleting, and toggling between JSON and summary are available.
-- The Chat Page is used to conduct the interview. If accessed directly, the user can select a questionnaire from the catalog. 
+- The Chat Page is used to conduct the interview. If accessed directly, the user can select a questionnaire from the catalog.
+
+- LLM prompts are now loaded from src/prompts/*.txt files for easy editing in the IDE.
+- FUTURE: Allow editing of these prompt files from the UI (e.g., an admin prompt editor page).
