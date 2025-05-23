@@ -44,6 +44,56 @@ This document summarizes the approach to testing for the Conversational Medical 
     - Multiple attempts to mock `useRef`, `Element.prototype.scrollIntoView`, and `useEffect` did not resolve the issue.
     - This may require a different testing strategy or more advanced setup for Material UI components.
 
+## Key Update: Natural Language Conversational Flow (2024-06)
+- The Chat Interview now supports a fully interactive, LLM-driven conversation:
+  - Free-text input and LLM-driven conversation for each question.
+  - LLM-driven score prompting (only when relevant).
+  - Skipping questions and validation for special types (email, date).
+  - Both FHIR and Markdown questionnaire flows.
+  - UI always shows text input, score buttons only when needed.
+  - LLM prompt and response parsing are now central to the chat flow.
+
+## Numeric Scale and Answer Handling (2024-06)
+- For FHIR 'choice' questions:
+  - 'no', 'never', etc. auto-assigns score 0 and moves on (no LLM confirmation).
+  - Valid score (0–4) is recorded and moves on.
+  - Any other answer prompts the numeric scale UI.
+  - LLM is only used for clarification if the answer is ambiguous and not a 'choice' type.
+- For non-choice questions, LLM is used for clarification/validation as before.
+- This ensures a streamlined, user-friendly experience for structured questionnaires.
+
+## Structured Answer Handling Update (2024-06)
+- Test that for questions with answerOption, chips/buttons and a Skip button are shown immediately if the number of options is <= threshold (configurable via .env).
+- Test that users can answer by clicking or skipping. For more options, free text is also allowed.
+- Test that typed input is matched to options; ambiguous input triggers a nudge.
+- Test that no redundant prompts are shown.
+- Test accessibility for all options and skip.
+- This makes the chat more natural and efficient for structured questions.
+
+## PDF and FHIR JSON Upload (2024-06)
+- Test that PDF upload and extraction works, and extracted text can be converted to FHIR JSON via LLM.
+- Test that FHIR JSON upload works and only valid FHIR Questionnaire JSON enables Save to Catalog.
+- Test that Import page controls are all above the text box and follow the new workflow.
+
+## Chips Threshold Configuration (2024-06)
+- Test that the chips threshold can be set via `.env` and the UI updates accordingly.
+- Test that questions with <= threshold options show only chips and skip, and more options show free text as well.
+
+## Catalog Summary Toggle (2024-06)
+- Test that the Catalog viewer allows toggling between raw JSON and a human-readable summary of questions/answers.
+
+## Catalog and Chat Workflow (2024-06)
+- Test that users start a chat from the Catalog page, not from Import.
+- Test that Catalog page allows viewing, renaming, deleting, and toggling JSON/summary for each questionnaire.
+- Test that Chat page loads the selected questionnaire and interview proceeds as expected.
+
+## Future Tests for LLM-Driven Conversational Flow
+- Test that the chat accepts free-text answers and the LLM determines the next step (score, clarify, skip, move on).
+- Test that score input is only shown when the LLM says a score is needed.
+- Test that skipping and validation for special question types work as expected.
+- Test both FHIR and Markdown questionnaire flows.
+- Test that the UI always shows a text input, and score buttons only when needed.
+
 ## Future Tests for Hybrid Scoring System
 - **Scoring UI rendering:** Ensure the 0–4 scale is shown at the correct time in the chat flow.
 - **Accessibility:** Verify that scoring buttons are keyboard and screen-reader accessible.
@@ -69,17 +119,53 @@ This document summarizes the approach to testing for the Conversational Medical 
 
 ## Future Tests for Navigation and Import Workflow
 - **Tab sync:** Test that navigation tabs always match the current route, even after programmatic navigation. _(not yet implemented)_
-- **Navigation:** Test that navigation between pages (Import, Chat, Logs) works as expected. _(not yet implemented)_
-- **Import:** Test that questionnaire import (FHIR/Markdown) is robust and errors are handled gracefully. _(not yet implemented)_
+- **Navigation:** Test that navigation between pages (Import, Chat, Logs, Catalog) works as expected. _(not yet implemented)_
+- **Import:** Test that questionnaire import (FHIR/Markdown/PDF) is robust and errors are handled gracefully. _(not yet implemented)_
 - **State preservation:** Test that state (loaded questionnaire) is preserved between pages and after refresh. _(not yet implemented)_
 - **Logs accessibility:** Test that logs are accessible and manageable from the Logs page. _(not yet implemented)_
-- **Large questionnaire edge cases:** Test that very large Markdown files are handled or chunked as needed. _(not yet implemented)_
+- **Large questionnaire edge cases:** Test that very large Markdown or PDF files are handled or chunked as needed. _(not yet implemented)_
 
 ## Future E2E/Integration Tests
 - **Full workflow:** Test the complete user flow from import to chat to log export and review. _(not yet implemented)_
 - **Accessibility:** Test keyboard navigation and screen reader support for all major UI elements. _(not yet implemented)_
 - **Voice input/output:** Test voice scaffolding when implemented. _(not yet implemented)_
 - **Medplum/cloud integration:** Test cloud export and authentication when implemented. _(not yet implemented)_
+
+## Future Tests for Numeric Scale and Answer Handling
+- Test that 'no', 'never', etc. auto-assigns score 0 and moves on for 'choice' questions.
+- Test that valid score (0–4) is recorded and moves on for 'choice' questions.
+- Test that any other answer prompts the numeric scale UI for 'choice' questions.
+- Test that LLM is only used for clarification if the answer is ambiguous and not a 'choice' type.
+- Test that for non-choice questions, LLM is used for clarification/validation as before.
+
+## Questionnaire Catalog (2024-06)
+- Test saving a questionnaire to the catalog from the Import page.
+- Test loading a questionnaire from the catalog (from Catalog page).
+- Test renaming and deleting questionnaires in the catalog.
+- Test catalog persistence across app restarts.
+- Test that catalog is cleared if browser storage is cleared.
+- Test that duplicate questionnaires are not added.
+- Test catalog management via catalogUtils.ts.
+- Test Catalog summary toggle (JSON/summary).
+
+## Conversational Phrasing with LLM (2024-06)
+- Test that on import, all questions are run through the LLM and item.conversationalText is set.
+- Test that the chat UI uses item.conversationalText if present.
+- Test that only defined answer options (including frequency scales) are shown; never invent a scale.
+- Test that the experience is robust to different questionnaire styles.
+
+## Conversational Phrasing Enrichment (2024-06)
+- Test that on import, all questions are run through Gemini and `item.conversationalText` is set.
+- Test that the chat UI uses `item.conversationalText` if present.
+- Test that the experience is robust to poor-quality or awkwardly worded source questionnaires.
+- Test that the process works for both FHIR and Markdown imports.
+
+## Home Page and Routing Update (2024-06)
+- Test that the Home page at /home (and /) displays the README.md file, formatted as HTML/Markdown.
+- Test that navigation tabs (Home, Import, Chat, Logs, Catalog) are always in sync with the current route.
+- Test that the Import page is at /import.
+- Test that unknown routes redirect to Home.
+- Test that Markdown is rendered using vite-plugin-raw and react-markdown.
 
 ## Summary of Remaining Issues
 - **App.test.tsx:**

@@ -1,0 +1,795 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "stat-wellness-new-patient-intake",
+  "language": "en-US",
+  "title": "New Patient Intake Form",
+  "status": "draft",
+  "date": "2025-05-22T00:00:00-04:00",
+  "publisher": "STAT Wellness",
+  "description": "STAT Wellness New Patient Intake Form Questionnaire.",
+  "item": [
+    {
+      "linkId": "group-patient-info",
+      "type": "group",
+      "item": [
+        {
+          "linkId": "fullName",
+          "text": "Full Name",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "linkId": "group-primary-contact",
+      "text": "Primary Contact Details",
+      "type": "group",
+      "item": [
+        {
+          "linkId": "caregiverFirstName",
+          "text": "Caregiver First Name",
+          "type": "string"
+        },
+        {
+          "linkId": "caregiverLastName",
+          "text": "Caregiver Last Name",
+          "type": "string"
+        },
+        {
+          "linkId": "email",
+          "text": "Email",
+          "type": "string"
+        },
+        {
+          "linkId": "homePhone",
+          "text": "Home Phone",
+          "type": "string"
+        },
+        {
+          "linkId": "mobilePhone",
+          "text": "Mobile Phone",
+          "type": "string"
+        },
+        {
+          "linkId": "workPhone",
+          "text": "Work Phone",
+          "type": "string"
+        },
+        {
+          "linkId": "fax",
+          "text": "Fax",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "linkId": "primaryPhoneType",
+      "text": "Primary Phone",
+      "type": "choice",
+      "required": true,
+      "answerOption": [
+        {"valueString": "Mobile Phone"},
+        {"valueString": "Home Phone"},
+        {"valueString": "Work Phone"}
+      ]
+    },
+    {
+      "linkId": "group-address",
+      "text": "Address",
+      "type": "group",
+      "item": [
+        {
+          "linkId": "addressLine1",
+          "text": "Address Line1",
+          "type": "string"
+        },
+        {
+          "linkId": "addressLine2",
+          "text": "Address Line2",
+          "type": "string"
+        },
+        {
+          "linkId": "city",
+          "text": "City",
+          "type": "string",
+          "required": true
+        },
+        {
+          "linkId": "country",
+          "text": "Country",
+          "type": "string"
+        },
+        {
+          "linkId": "state",
+          "text": "State",
+          "type": "string",
+          "required": true
+        },
+        {
+          "linkId": "zipCode",
+          "text": "Zip code",
+          "type": "string"
+        },
+        {
+          "linkId": "postboxNo",
+          "text": "Postbox No",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "linkId": "group-emergency-contact-1",
+      "text": "Emergency Contact",
+      "type": "group",
+      "item": [
+        {
+          "linkId": "emergencyContactName1",
+          "text": "Emergency Contact Name",
+          "type": "string"
+        },
+        {
+          "linkId": "emergencyContactNumber1",
+          "text": "Emergency Contact Number",
+          "type": "string"
+        },
+        {
+          "linkId": "emergencyContactExtn1",
+          "text": "Extn",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "linkId": "group-allergies",
+      "text": "Allergies",
+      "type": "group",
+      "repeats": true,
+      "item": [
+        {
+          "linkId": "allergyName",
+          "text": "Allergies",
+          "type": "string"
+        },
+        {
+          "linkId": "allergyType",
+          "text": "Type",
+          "type": "string"
+        },
+        {
+          "linkId": "allergySeverity",
+          "text": "Severity",
+          "type": "string"
+        },
+        {
+          "linkId": "allergyReactions",
+          "text": "Reactions",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "linkId": "group-medications",
+      "text": "Medications",
+      "type": "group",
+      "repeats": true,
+      "item": [
+        {
+          "linkId": "medicationName",
+          "text": "Medication Name",
+          "type": "string"
+        },
+        {
+          "linkId": "medicationIntakeDetails",
+          "text": "Intake Details",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "linkId": "group-supplements",
+      "text": "Supplements",
+      "type": "group",
+      "repeats": true,
+      "item": [
+        {
+          "linkId": "supplementName",
+          "text": "Supplement Name",
+          "type": "string"
+        },
+        {
+          "linkId": "supplementIntakeDetails",
+          "text": "Intake Details",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "linkId": "pharmacyName",
+      "text": "Pharmacy:",
+      "type": "string"
+    },
+    {
+      "linkId": "pharmacyAddress",
+      "text": "Pharmacy address:",
+      "type": "string"
+    },
+    {
+      "linkId": "mayLeaveMessage",
+      "text": "May we leave a message regarding your visits?",
+      "type": "boolean"
+    },
+    {
+      "linkId": "mayUseEmail",
+      "text": "May we use your email address occasionally for health related information?",
+      "type": "boolean"
+    },
+    {
+      "linkId": "occupation",
+      "text": "What is your occupation?",
+      "type": "string"
+    },
+    {
+      "linkId": "hoursWorkPerWeek",
+      "text": "How many hours do you work per week?",
+      "type": "integer"
+    },
+    {
+      "linkId": "satisfiedWithWork",
+      "text": "Are you satisfied with your work situation?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "workSituationElaborate",
+      "text": "If no, would you like to elaborate?",
+      "type": "text",
+      "enableWhen": [
+        {
+          "question": "satisfiedWithWork",
+          "operator": "=",
+          "answerBoolean": false
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "maritalStatus",
+      "text": "Marital Status",
+      "type": "choice",
+      "answerOption": [
+        {"valueString": "Single"},
+        {"valueString": "Married"},
+        {"valueString": "Separated"},
+        {"valueString": "Divorced"},
+        {"valueString": "Common-Law"}
+      ]
+    },
+    {
+      "linkId": "children",
+      "text": "Children",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "howDidYouHear",
+      "text": "How did you hear about us?",
+      "type": "string"
+    },
+    {
+      "linkId": "group-emergency-contact-2",
+      "text": "Emergency Contact (from page 2)",
+      "type": "group",
+      "item": [
+        {
+            "linkId": "emergencyContactName2",
+            "text": "Name of Emergency Contact",
+            "type": "string"
+        },
+        {
+            "linkId": "emergencyContactRelationship2",
+            "text": "Relationship to Patient",
+            "type": "string"
+        },
+        {
+            "linkId": "emergencyContactPhone2",
+            "text": "Phone Number for Emergency Contact",
+            "type": "string",
+            "required": true
+        }
+      ]
+    },
+    {
+      "linkId": "otherHealthCareProviders",
+      "text": "Please list other health care providers",
+      "type": "text"
+    },
+    {
+      "linkId": "currentHealthcareConcerns",
+      "text": "What are your current healthcare concerns?",
+      "type": "text"
+    },
+    {
+      "linkId": "generalHealthRating",
+      "text": "How do you rate your general state of health?",
+      "type": "choice",
+      "answerOption": [
+        {"valueString": "Poor"},
+        {"valueString": "Fair"},
+        {"valueString": "Good"},
+        {"valueString": "Very Good"},
+        {"valueString": "Excellent"}
+      ]
+    },
+    {
+      "linkId": "generalHealthComments",
+      "text": "Comments?",
+      "type": "text"
+    },
+    {
+      "linkId": "currentDiagnosedConditions",
+      "text": "Do you have any current diagnosed conditions?",
+      "type": "text"
+    },
+    {
+      "linkId": "pastDiagnosedConditions",
+      "text": "Do you have any past diagnosed conditions?",
+      "type": "text"
+    },
+    {
+      "linkId": "pastIllnessesAccidentsHospitalization",
+      "text": "Do you have any current or past illnesses, accidents or hospitalization?",
+      "type": "text"
+    },
+    {
+      "linkId": "antibioticTreatmentsCount",
+      "text": "How many times have you been treated with antibiotics?",
+      "type": "string"
+    },
+    {
+      "linkId": "regularScreeningTests",
+      "text": "Do you get regular screening tests? (PAP, blood, ect)",
+      "type": "text"
+    },
+    {
+      "linkId": "lastPhysicalExamDate",
+      "text": "Date of last physical exam:",
+      "type": "date"
+    },
+    {
+      "linkId": "currentlyPregnant",
+      "text": "Are you currently pregnant?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "currentlyBreastfeeding",
+      "text": "Are you currently breastfeeding?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "past24HoursFoodIntake",
+      "text": "Please list what you have eaten in the past 24 hours (breakfast, lunch, dinner, snacks and drinks):",
+      "type": "text"
+    },
+    {
+      "linkId": "avoidFoodsWhy",
+      "text": "Do you avoid any foods and why?",
+      "type": "text"
+    },
+    {
+      "linkId": "doYouExercise",
+      "text": "Do you exercise?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "exerciseTimePerWeek",
+      "text": "How much time do you spend exercising in the course of 1 week:",
+      "type": "string"
+    },
+    {
+      "linkId": "enjoyableExerciseTypes",
+      "text": "What kinds of exercise do you enjoy?",
+      "type": "text"
+    },
+    {
+      "linkId": "describeAppetite",
+      "text": "Describe your appetite:",
+      "type": "string"
+    },
+    {
+      "linkId": "energyLevelRating",
+      "text": "How would you rate your energy level (where 1 is lowest and 10 is best)",
+      "type": "integer",
+       "extension": [
+          {"url": "http://hl7.org/fhir/StructureDefinition/questionnaire-min", "valueInteger": 1},
+          {"url": "http://hl7.org/fhir/StructureDefinition/questionnaire-max", "valueInteger": 10}
+       ]
+    },
+    {
+      "linkId": "hoursSleepPerNight",
+      "text": "How many hours of sleep do get get each night?",
+      "type": "decimal"
+    },
+    {
+      "linkId": "wakeFeelingRested",
+      "text": "Do you wake feeling rested?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "troubleFallingAsleep",
+      "text": "Do you have trouble falling asleep?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "sleepPatterns",
+      "text": "What are your sleep patterns? (include usual times of sleep, wake, naps)",
+      "type": "text"
+    },
+    {
+      "linkId": "group-exposure",
+      "text": "Are you exposed to any of the following?",
+      "type": "group",
+      "item": [
+        {"linkId": "exposureDust", "text": "Dust", "type": "boolean"},
+        {"linkId": "exposureMold", "text": "Mold", "type": "boolean"},
+        {"linkId": "exposureMildew", "text": "Mildew", "type": "boolean"}
+      ]
+    },
+    {
+      "linkId": "liveWithPets",
+      "text": "Do you live with pets?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "homeCarpeted",
+      "text": "Is your home carpeted?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "height",
+      "text": "What is your height?",
+      "type": "string"
+    },
+    {
+      "linkId": "currentWeight",
+      "text": "What is your current weight?",
+      "type": "string"
+    },
+    {
+      "linkId": "idealWeight",
+      "text": "What is your ideal weight?",
+      "type": "string"
+    },
+    {
+      "linkId": "lostWeightRecently",
+      "text": "Have you lost any weight recently?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "howMuchWeightLost",
+      "text": "If so, how much?",
+      "type": "string",
+      "enableWhen": [
+        {
+          "question": "lostWeightRecently",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "familyMedicalHistory",
+      "text": "Please list any family medical history (please include parents, siblings, children, grandparents):",
+      "type": "text"
+    },
+    {
+      "linkId": "alcoholIntake",
+      "text": "Alcohol Intake:",
+      "type": "choice",
+      "answerOption": [
+        {"valueString": "Do Not Drink Alcohol"},
+        {"valueString": "Occasional Alcohol Consumption"},
+        {"valueString": "Social/Weekend Consumption"},
+        {"valueString": "3-7 days/week"}
+      ]
+    },
+    {
+      "linkId": "avgAlcoholDrinksPerWeek",
+      "text": "On average, how many alcoholic drinks do you have per week?",
+      "type": "integer"
+    },
+    {
+      "linkId": "currentlySmoke",
+      "text": "Do you currently smoke?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "smokeDetailsYes",
+      "text": "If YES how many cigarettes per day and for how many years?",
+      "type": "string",
+      "enableWhen": [
+        {
+          "question": "currentlySmoke",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "smokeDetailsNoPast",
+      "text": "If NO - but used to in the past - how long ago did you quit?",
+      "type": "string",
+      "enableWhen": [
+        {
+          "question": "currentlySmoke",
+          "operator": "=",
+          "answerBoolean": false
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "recreationalDrugs",
+      "text": "Do you use recreational drugs?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "recreationalDrugsDetails",
+      "text": "If YES explain type and frequency.",
+      "type": "text",
+      "enableWhen": [
+        {
+          "question": "recreationalDrugs",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "group-consumption",
+      "text": "Do you consume any of the following?",
+      "type": "group",
+      "item": [
+        {"linkId": "consumeCoffee", "text": "Coffee", "type": "boolean"},
+        {"linkId": "consumeNonHerbalTea", "text": "Non-herbal Tea", "type": "boolean"},
+        {"linkId": "consumeEnergyDrinks", "text": "Energy Drinks", "type": "boolean"},
+        {"linkId": "consumeSoftDrinks", "text": "Soft Drinks", "type": "boolean"}
+      ]
+    },
+    {
+      "linkId": "goalsFirstVisit",
+      "text": "What are 3 goals you want to address at your first visit?",
+      "type": "text"
+    },
+    {
+      "linkId": "longTermExpectations",
+      "text": "What are your long term expectations working with STAT Wellness?",
+      "type": "text"
+    },
+    {
+      "linkId": "commitmentLevel",
+      "text": "What is your level of commitment to learn and implement changes that will improve your health and well-being?",
+      "type": "integer",
+      "extension": [
+          {"url": "http://hl7.org/fhir/StructureDefinition/questionnaire-min", "valueInteger": 1},
+          {"url": "http://hl7.org/fhir/StructureDefinition/questionnaire-max", "valueInteger": 10}
+      ]
+    },
+    {
+      "linkId": "increaseCommitment",
+      "text": "If below an 8, what will it take to increase your level of commitment?",
+      "type": "text",
+      "enableWhen": [
+        {
+          "question": "commitmentLevel",
+          "operator": "<",
+          "answerInteger": 8
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "potentialObstacles",
+      "text": "What potential obstacles do you foresee in addressing factors that are undermining your health, and would make it difficult to follow a treatment plan?",
+      "type": "text"
+    },
+    {
+      "linkId": "group-male-patients-testing",
+      "text": "MALE PATIENTS: Do you have any of the following routine and diagnostic testing completed within the past 2 years?",
+      "type": "group",
+      "item": [
+        {"linkId": "maleTestProstateExam", "text": "Prostate exam/DRE", "type": "boolean"},
+        {"linkId": "maleTestPSA", "text": "PSA", "type": "boolean"},
+        {"linkId": "maleTestColonoscopy", "text": "Colonoscopy", "type": "boolean"}
+      ]
+    },
+    {
+      "linkId": "maleTestingDetails",
+      "text": "MALE PATIENTS: If yes to any of the previous routine testing what was the date and what were the results?",
+      "type": "text"
+    },
+    {
+      "linkId": "group-male-patients-conditions",
+      "text": "MALE PATIENTS: Do you have any of the following conditions?",
+      "type": "group",
+      "item": [
+        {"linkId": "maleCondProstateEnlargement", "text": "Prostate enlargement", "type": "boolean"},
+        {"linkId": "maleCondErectileDysfunction", "text": "Erectile Dysfunction", "type": "boolean"},
+        {"linkId": "maleCondHernia", "text": "Hernia", "type": "boolean"},
+        {"linkId": "maleCondChangeUrineStream", "text": "Change in urine stream/flow//urgency/difficulty", "type": "boolean"},
+        {"linkId": "maleCondChangeLibido", "text": "Change in libido", "type": "boolean"},
+        {"linkId": "maleCondTesticularMassPain", "text": "Testicular mass/pain", "type": "boolean"},
+        {"linkId": "maleCondWakingNightUrinate", "text": "Waking at night to urinate", "type": "boolean"},
+        {"linkId": "maleCondSTI", "text": "STI", "type": "boolean"}
+      ]
+    },
+    {
+      "linkId": "group-female-patients-reproductive-concerns",
+      "text": "FEMALE PATIENTS: Do you, or have you ever, had any of the following reproductive concerns?",
+      "type": "group",
+      "item": [
+        {"linkId": "femaleConcernBleedingSpotting", "text": "Bleeding or spotting between menses", "type": "boolean"},
+        {"linkId": "femaleConcernPainfulMenses", "text": "Painful menses", "type": "boolean"},
+        {"linkId": "femaleConcernPMSSymptoms", "text": "PMS symptoms", "type": "boolean"},
+        {"linkId": "femaleConcernIrregularCycles", "text": "Irregular cycles", "type": "boolean"},
+        {"linkId": "femaleConcernExcessiveMenstrualFlow", "text": "Excessive menstrual flow", "type": "boolean"},
+        {"linkId": "femaleConcernVaginalItching", "text": "Vaginal itching", "type": "boolean"},
+        {"linkId": "femaleConcernPainIntercourse", "text": "Pain during intercourse", "type": "boolean"},
+        {"linkId": "femaleConcernMidCycleSpotting", "text": "Mid-cycle spotting", "type": "boolean"},
+        {"linkId": "femaleConcernLowLibidoRepro", "text": "Low libido", "type": "boolean"},
+        {"linkId": "femaleConcernDifficultyConceiving", "text": "Difficulty conceiving", "type": "boolean"},
+        {"linkId": "femaleConcernVaginalDischarge", "text": "Vaginal discharge", "type": "boolean"}
+      ]
+    },
+    {
+      "linkId": "group-female-patients-gynecological-conditions",
+      "text": "FEMALE PATIENTS: Do you have any of the following gynecological conditions?",
+      "type": "group",
+      "item": [
+        {"linkId": "femaleCondEndometriosis", "text": "Endometriosis", "type": "boolean"},
+        {"linkId": "femaleCondFibroids", "text": "Fibroids", "type": "boolean"},
+        {"linkId": "femaleCondPCOS", "text": "PCOS", "type": "boolean"},
+        {"linkId": "femaleCondSTI", "text": "STI", "type": "boolean"},
+        {"linkId": "femaleCondInfertility", "text": "Infertility", "type": "boolean"},
+        {"linkId": "femaleCondLowLibidoGyno", "text": "Low libido", "type": "boolean"}
+      ]
+    },
+    {
+      "linkId": "femalePMSSymptomsExperienced",
+      "text": "FEMALE PATIENTS: What, if any, PMS symptoms do you experience?",
+      "type": "text"
+    },
+    {
+      "linkId": "femaleLastMenstrualPeriod",
+      "text": "FEMALE PATIENTS: When was your last menstrual period?",
+      "type": "string"
+    },
+    {
+      "linkId": "femaleAgeFirstMenses",
+      "text": "FEMALE PATIENTS: What was your age at first menses?",
+      "type": "integer"
+    },
+    {
+      "linkId": "femaleMenstrualCycleLength",
+      "text": "FEMALE PATIENTS: Length of menstrual cycle? (day 1 being first day of bleeding to the start of next period; ex: 28 days)",
+      "type": "string"
+    },
+    {
+      "linkId": "femaleMenopausalPerimenopausal",
+      "text": "FEMALE PATIENTS: Are you menopausal or perimenopausal?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "femaleMenopauseDetails",
+      "text": "If YES, please provide dates of onset and last period.",
+      "type": "text",
+      "enableWhen": [
+        {
+          "question": "femaleMenopausalPerimenopausal",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "femaleTakingHormones",
+      "text": "FEMALE PATIENTS: Are you currently taking hormones (birth control or hormone replacement therapy)?",
+      "type": "choice",
+      "answerOption": [
+        {"valueBoolean": true, "display": "Yes"},
+        {"valueBoolean": false, "display": "No"}
+      ]
+    },
+    {
+      "linkId": "femaleHormonesDetails",
+      "text": "If YES please list type and duration.",
+      "type": "text",
+      "enableWhen": [
+        {
+          "question": "femaleTakingHormones",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all"
+    },
+    {
+      "linkId": "femalePregnanciesNumber",
+      "text": "FEMALE PATIENTS: Number of pregnancies:",
+      "type": "integer"
+    },
+    {
+      "linkId": "femaleLiveBirthsNumber",
+      "text": "FEMALE PATIENTS: Number of live births:",
+      "type": "integer"
+    },
+    {
+      "linkId": "femaleAbortionsMiscarriagesNumber",
+      "text": "FEMALE PATIENTS: Number of abortions/miscarriages:",
+      "type": "integer"
+    },
+    {
+      "linkId": "femaleLastGynoExam",
+      "text": "FEMALE PATIENTS: Last gynaecological exam:",
+      "type": "string"
+    },
+    {
+      "linkId": "femaleLastPapTest",
+      "text": "FEMALE PATIENTS: Last PAP test:",
+      "type": "string"
+    }
+  ]
+}

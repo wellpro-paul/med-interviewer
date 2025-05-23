@@ -1,12 +1,13 @@
 # Conversational Medical Intake App (Prototype)
 
-This is a local prototype of a conversational medical intake app inspired by the Medical Symptoms Questionnaire (MSQ). It uses a chat interface powered by an LLM (OpenAI or Gemini) to interview patients in natural language.
+This is a local prototype of a conversational medical intake app. It uses a chat interface powered by an LLM (OpenAI or Gemini) to interview patients in natural language using questionnaires defined in FHIR Questionnaire JSON.
 
 ## Features
 - Multi-page app with navigation:
-  1. **Questionnaire Import:** Paste or upload a FHIR Questionnaire JSON or Markdown. Transform Markdown to FHIR JSON using Gemini LLM (no regex). Load the questionnaire for use in the interview.
-  2. **Chat Interview:** Conversational intake flow, driven by the loaded FHIR Questionnaire. Hybrid scoring system (0–4 scale) for each symptom.
+  1. **Questionnaire Import:** Paste, upload, or extract from PDF a FHIR Questionnaire JSON or Markdown. Transform Markdown or extracted PDF text to FHIR JSON using Gemini LLM (no regex). Upload FHIR JSON directly. Save the questionnaire to the catalog for use in the interview.
+  2. **Chat Interview:** Conversational intake flow, driven by the loaded FHIR Questionnaire. Hybrid scoring system (0–4 scale) for each symptom. Chips-only UI for questions with a small number of options (configurable).
   3. **Logs:** View, download, or delete chat logs (Markdown and FHIR JSON) in a full-page UI.
+  4. **Catalog:** View, rename, delete, and start chat with any saved questionnaire. Toggle between raw JSON and a human-readable summary of questions/answers.
 - Responsive chat UI (works on mobile and desktop)
 - Adaptive, conversational intake flow
 - Local storage of responses and chat logs (Markdown and FHIR JSON, grouped by day/session)
@@ -17,25 +18,48 @@ This is a local prototype of a conversational medical intake app inspired by the
 - (Future) ValueSet/LOINC mapping for imported questionnaires
 - (Future) Cloud/Medplum integration
 - Domain-specific prompt/rules for medical best practices (e.g., only consider biological relatives for family history, clarify ambiguous answers, etc.)
-- Guided by questions from a source questionnaire (FHIR or Markdown)
+- Guided by questions from a source questionnaire (FHIR, Markdown, or PDF)
 - **Navigation tabs always match the current page, even after programmatic navigation.**
 
-## Workflow
-1. **Import Questionnaire:**
-   - Paste FHIR Questionnaire JSON or Markdown into the import page.
-   - If Markdown, click the "Transform" button to convert to FHIR JSON using Gemini LLM.
-   - Click "Load" to use the questionnaire for the interview.
-2. **Chat Interview:**
-   - The chat UI guides the user through the questionnaire, presenting questions and scoring options as defined in the loaded FHIR Questionnaire.
-   - Section and grand totals are calculated and shown to the user for confirmation.
-   - At the end of the interview, logs are saved automatically (Markdown and FHIR JSON).
-3. **Logs:**
-   - View, download, or delete previous chat logs (Markdown and FHIR JSON) on a dedicated page.
+## Key Updates (2024-06)
+- **PDF Upload & Extraction:** Upload a PDF, extract text in-browser, and convert to FHIR JSON using the LLM workflow.
+- **FHIR JSON Upload:** Upload a FHIR Questionnaire JSON file directly.
+- **Import Page Workflow:** All controls (Upload PDF, Convert to FHIR, Upload FHIR JSON, Save to Catalog, Reset) are above a single scrollable text box. Button order matches the logical workflow. Only Save to Catalog is enabled for valid FHIR JSON.
+- **Chips Threshold:** The number of answer options for which only chips (and skip) are shown in the chat UI is now configurable via `.env` (`REACT_APP_CHIPS_THRESHOLD`, default 5).
+- **Catalog Summary Toggle:** In the Catalog viewer, toggle between raw JSON and a human-readable summary of questions and answer options.
+- **No 'Import for Chat':** Users start a chat from the Catalog page, not from Import.
+- **Chips-Only UI:** For questions with <= threshold options, only chips and skip are shown (no free text input).
+
+## Configuration
+- You can set the chips threshold in your `.env` file:
+  ```
+  REACT_APP_CHIPS_THRESHOLD=5
+  ```
+  This controls how many answer options are shown as chips only (with skip) before free text is also allowed.
+
+## Updated Import, Catalog, and Chat Workflow (2024-06)
+
+```
++----------------+         +----------------+         +----------------+
+|   Import Page  |         |  Catalog Page  |         |   Chat Page    |
+| (Import,       |         | (List,         |         | (Interview,    |
+|  Convert,      |         |  Start Chat)  |         |  Select Q if   |
+|  Save)         |         |                |         |  needed)       |
++-------+--------+         +-------+--------+         +--------+-------+
+        |                          |                           ^
+        |  (After Save)            |  (Start Chat)            |
+        +------------------------->+-------------------------->+
+```
+
+- The navigation order is: Home, Import, Catalog, Chat, Logs.
+- The Import Page is for adding new questionnaires (Markdown, FHIR JSON, or PDF), converting, and saving to the catalog. All controls are above the text box. No 'Import for Chat' button.
+- The Catalog Page lists all saved questionnaires and allows starting a new chat/interview for each entry ("Start Chat" button). Editing, renaming, deleting, and toggling between JSON and summary are available.
+- The Chat Page is used to conduct the interview. If accessed directly, the user can select a questionnaire from the catalog.
 
 ## Extensibility
-- Supports both fully coded (FHIR/LOINC) and freeform (Markdown) questionnaires.
-- Admins can convert Markdown to FHIR using the built-in LLM workflow.
-- The app can be extended to support other formats (CSV, PDF-to-text, etc.) in the future.
+- Supports fully coded (FHIR/LOINC), freeform (Markdown), and PDF-extracted questionnaires.
+- Admins can convert Markdown or PDF text to FHIR using the built-in LLM workflow.
+- The app can be extended to support other formats (CSV, etc.) in the future.
 
 ## Requirements
 - Node.js (v18+ recommended)
@@ -50,11 +74,12 @@ This is a local prototype of a conversational medical intake app inspired by the
    # or
    yarn install
    ```
-3. Create a `.env` file with your LLM API key:
+3. Create a `.env` file with your LLM API key and (optionally) chips threshold:
    ```
    OPENAI_API_KEY=your-key-here
    # or
    GEMINI_API_KEY=your-key-here
+   REACT_APP_CHIPS_THRESHOLD=5
    ```
 4. Start the app:
    ```
@@ -65,5 +90,25 @@ This is a local prototype of a conversational medical intake app inspired by the
    ```
 
 ## Troubleshooting
-- **Large Markdown questionnaires:** Gemini LLM may fail to convert very large questionnaires in one go. If you encounter errors, try splitting the Markdown into smaller sections and importing them separately.
+- **Large Markdown or PDF questionnaires:** Gemini LLM may fail to convert very large questionnaires in one go. If you encounter errors, try splitting the input into smaller sections and importing them separately.
 - **Local-only:** This app runs entirely locally unless you add Medplum/cloud integration.
+
+## Questionnaire Catalog
+- Imported questionnaires can be saved to a persistent catalog (localStorage).
+- The Catalog page lists all saved questionnaires, with options to start chat, view (JSON or summary), rename, or delete.
+- The Import page allows saving to the catalog.
+- Catalog persists across app restarts (unless browser storage is cleared).
+- No backend is required; catalog is browser-specific.
+
+## Conversational Phrasing with LLM
+- On import, all questions are run through the LLM to generate a friendly, patient-facing conversational phrasing, stored as item.conversationalText.
+- The chat UI uses this phrasing for each question, making the experience more natural and context-aware.
+- The app only shows answer options (including frequency scales) if they are defined in the questionnaire; it never invents a scale or prompt.
+- This approach is robust to different questionnaire styles and ensures a patient-friendly experience.
+
+## Home Page and Routing
+- The app now has a Home page at /home (and /) that displays the contents of this README.md file, formatted as rich HTML/Markdown.
+- Navigation tabs include Home, Import, Catalog, Chat, and Logs, always in sync with the current route.
+- The Import page is now at /import.
+- Unknown routes redirect to Home.
+- Uses Vite and vite-plugin-raw to import and render Markdown as the landing page.

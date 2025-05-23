@@ -1,0 +1,918 @@
+  {
+    "resourceType": "Questionnaire",
+    "id": "annual-wellness-visit-medical-history",
+    "language": "en-US",
+    "title": "Annual Wellness Visit - Medical History Questionnaire",
+    "description": "A comprehensive medical history questionnaire for a primary care physician conducting an annual wellness visit.",
+    "status": "draft",
+    "date": "2025-05-21T23:11:00-04:00",
+    "publisher": "Primary Care Clinic Example",
+    "item": [
+      {
+        "linkId": "patient-information",
+        "text": "I. Patient Information",
+        "type": "group",
+        "item": [
+          {
+            "linkId": "1.1",
+            "text": "Full Name:",
+            "type": "string",
+            "required": true
+          },
+          {
+            "linkId": "1.2",
+            "code": [
+              {
+                "system": "http://loinc.org",
+                "code": "21112-8",
+                "display": "Birth date"
+              }
+            ],
+            "text": "Date of Birth (MM/DD/YYYY):",
+            "type": "date",
+            "required": true
+          },
+          {
+            "linkId": "1.3",
+            "text": "Age:",
+            "type": "integer"
+          },
+          {
+            "linkId": "1.4",
+            "code": [
+              {
+                "system": "http://loinc.org",
+                "code": "76689-9",
+                "display": "Sex assigned at birth"
+              }
+            ],
+            "text": "Sex Assigned at Birth:",
+            "type": "choice",
+            "required": true,
+            "answerOption": [
+              {
+                "valueCoding": {
+                  "system": "http://hl7.org/fhir/administrative-gender",
+                  "code": "male",
+                  "display": "Male"
+                }
+              },
+              {
+                "valueCoding": {
+                  "system": "http://hl7.org/fhir/administrative-gender",
+                  "code": "female",
+                  "display": "Female"
+                }
+              },
+              {
+                "valueString": "Other"
+              }
+            ]
+          },
+          {
+              "linkId": "1.4.1",
+              "text": "If Other, please specify:",
+              "type": "string",
+              "enableWhen": [
+                  {
+                      "question": "1.4",
+                      "operator": "=",
+                      "answerString": "Other"
+                  }
+              ],
+              "enableBehavior": "all"
+          },
+          {
+            "linkId": "1.5",
+            "code": [
+              {
+                  "system": "http://loinc.org",
+                  "code": "76691-5",
+                  "display": "Gender identity"
+              }
+            ],
+            "text": "Gender Identity (if different from sex assigned at birth):",
+            "type": "string"
+          },
+          {
+            "linkId": "1.6",
+            "text": "Preferred Pronouns:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.7",
+            "text": "Address:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.8",
+            "text": "City:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.9",
+            "text": "State:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.10",
+            "text": "Zip Code:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.11",
+            "text": "Phone Number (Mobile):",
+            "type": "string"
+          },
+          {
+            "linkId": "1.12",
+            "text": "Phone Number (Home):",
+            "type": "string"
+          },
+          {
+            "linkId": "1.13",
+            "text": "Email Address:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.14",
+            "text": "Emergency Contact Name:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.15",
+            "text": "Emergency Contact Phone:",
+            "type": "string"
+          },
+          {
+            "linkId": "1.16",
+            "text": "Emergency Contact Relationship:",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "linkId": "reason-for-visit",
+        "text": "II. Reason for Visit / Health Goals",
+        "type": "group",
+        "item": [
+          {
+            "linkId": "2.1",
+            "text": "What are your main health concerns today? (Even for a wellness visit, please list any specific questions or concerns you have)",
+            "type": "text"
+          },
+          {
+            "linkId": "2.2",
+            "text": "What are your health goals for the next year? (e.g., lose weight, exercise more, manage stress)",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "linkId": "past-medical-history",
+        "text": "III. Past Medical History",
+        "type": "group",
+        "item": [
+          {
+            "linkId": "3.1",
+            "text": "Have you ever been diagnosed with any of the following conditions? (Check all that apply)",
+            "type": "group",
+            "repeats": false,
+            "item": [
+              {"linkId": "3.1.1", "text": "High Blood Pressure", "type": "boolean"},
+              {"linkId": "3.1.2", "text": "High Cholesterol", "type": "boolean"},
+              {"linkId": "3.1.3", "text": "Diabetes (Type 1 or 2)", "type": "boolean"},
+              {"linkId": "3.1.4", "text": "Prediabetes", "type": "boolean"},
+              {"linkId": "3.1.5", "text": "Heart Attack", "type": "boolean"},
+              {"linkId": "3.1.6", "text": "Stroke", "type": "boolean"},
+              {"linkId": "3.1.7", "text": "Atrial Fibrillation", "type": "boolean"},
+              {"linkId": "3.1.8", "text": "Congestive Heart Failure", "type": "boolean"},
+              {"linkId": "3.1.9", "text": "Asthma", "type": "boolean"},
+              {"linkId": "3.1.10", "text": "COPD / Emphysema", "type": "boolean"},
+              {"linkId": "3.1.11", "text": "Sleep Apnea", "type": "boolean"},
+              {
+                "linkId": "3.1.12",
+                "text": "Cancer",
+                "type": "boolean",
+                "item": [
+                  {
+                    "linkId": "3.1.12.1",
+                    "text": "Type:",
+                    "type": "string",
+                    "enableWhen": [{"question": "3.1.12", "operator": "=", "answerBoolean": true}],
+                    "enableBehavior": "all"
+                  },
+                  {
+                    "linkId": "3.1.12.2",
+                    "text": "Year Diagnosed:",
+                    "type": "integer",
+                    "enableWhen": [{"question": "3.1.12", "operator": "=", "answerBoolean": true}],
+                    "enableBehavior": "all"
+                  }
+                ]
+              },
+              {"linkId": "3.1.13", "text": "Thyroid Problems (Hyper/Hypo)", "type": "boolean"},
+              {"linkId": "3.1.14", "text": "Kidney Disease", "type": "boolean"},
+              {"linkId": "3.1.15", "text": "Liver Disease (e.g., Hepatitis, Cirrhosis)", "type": "boolean"},
+              {"linkId": "3.1.16", "text": "Arthritis (Osteoarthritis/Rheumatoid)", "type": "boolean"},
+              {"linkId": "3.1.17", "text": "Osteoporosis / Osteopenia", "type": "boolean"},
+              {"linkId": "3.1.18", "text": "GERD / Acid Reflux", "type": "boolean"},
+              {"linkId": "3.1.19", "text": "Irritable Bowel Syndrome (IBS)", "type": "boolean"},
+              {"linkId": "3.1.20", "text": "Inflammatory Bowel Disease (Crohn's/Colitis)", "type": "boolean"},
+              {"linkId": "3.1.21", "text": "Anemia", "type": "boolean"},
+              {"linkId": "3.1.22", "text": "Blood Clots (DVT/PE)", "type": "boolean"},
+              {"linkId": "3.1.23", "text": "Migraines / Frequent Headaches", "type": "boolean"},
+              {"linkId": "3.1.24", "text": "Depression", "type": "boolean"},
+              {"linkId": "3.1.25", "text": "Anxiety", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "3.2",
+            "text": "Other significant medical conditions:",
+            "type": "text"
+          },
+          {
+            "linkId": "3.3",
+            "text": "Surgeries: Please list any surgeries you have had, including the approximate year.",
+            "type": "group",
+            "repeats": true,
+            "item": [
+              {"linkId": "3.3.1", "text": "Surgery Type", "type": "string"},
+              {"linkId": "3.3.2", "text": "Year", "type": "integer"},
+              {"linkId": "3.3.3", "text": "Hospital/Surgeon (Optional)", "type": "string"}
+            ]
+          },
+          {
+            "linkId": "3.4",
+            "text": "Hospitalizations: Please list any hospitalizations (other than for surgeries listed above), including reason and approximate year.",
+            "type": "group",
+            "repeats": true,
+            "item": [
+              {"linkId": "3.4.1", "text": "Reason for Hospitalization", "type": "string"},
+              {"linkId": "3.4.2", "text": "Year", "type": "integer"},
+              {"linkId": "3.4.3", "text": "Hospital (Optional)", "type": "string"}
+            ]
+          }
+        ]
+      },
+      {
+        "linkId": "medications",
+        "text": "IV. Medications",
+        "type": "group",
+        "item": [
+          {
+            "linkId": "4.1",
+            "text": "Please list ALL medications you are currently taking, including prescriptions, over-the-counter drugs, vitamins, and herbal supplements.",
+            "type": "group",
+            "repeats": true,
+            "item": [
+              {"linkId": "4.1.1", "text": "Medication Name", "type": "string", "required": true},
+              {"linkId": "4.1.2", "text": "Dose (e.g., 50mg)", "type": "string"},
+              {"linkId": "4.1.3", "text": "Frequency (e.g., twice daily)", "type": "string"},
+              {"linkId": "4.1.4", "text": "Reason for Taking", "type": "string"},
+              {"linkId": "4.1.5", "text": "Prescribing Doctor (if known)", "type": "string"}
+            ]
+          },
+          {
+            "linkId": "4.2",
+            "text": "Do you use a mail-order pharmacy?",
+            "type": "boolean"
+          },
+          {
+            "linkId": "4.3",
+            "text": "Pharmacy Name & Phone:",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "linkId": "allergies",
+        "text": "V. Allergies",
+        "type": "group",
+        "item": [
+          {
+            "linkId": "5.1",
+            "text": "Are you allergic to any medications, foods, or other substances (e.g., latex, bee stings)?",
+            "type": "boolean",
+            "required": true
+          },
+          {
+            "linkId": "5.2",
+            "text": "If yes, please list them and describe the reaction:",
+            "type": "group",
+            "repeats": true,
+            "enableWhen": [
+              {
+                "question": "5.1",
+                "operator": "=",
+                "answerBoolean": true
+              }
+            ],
+            "enableBehavior": "all",
+            "item": [
+              {"linkId": "5.2.1", "text": "Allergen", "type": "string", "required": true},
+              {"linkId": "5.2.2", "text": "Reaction Described", "type": "string", "required": true}
+            ]
+          }
+        ]
+      },
+      {
+        "linkId": "family-history",
+        "text": "VI. Family History",
+        "type": "group",
+        "item": [
+          {
+            "linkId": "6.1",
+            "text": "Has anyone in your immediate family (parents, siblings, children) had any of the following conditions?",
+            "type": "group",
+            "item": [
+              {
+                "linkId": "6.1.1", "text": "Heart Disease", "type": "group",
+                "item": [
+                  {"linkId": "6.1.1.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.1.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.2", "text": "Stroke", "type": "group",
+                "item": [
+                  {"linkId": "6.1.2.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.2.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.3", "text": "High Blood Pressure", "type": "group",
+                "item": [
+                  {"linkId": "6.1.3.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.3.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.4", "text": "High Cholesterol", "type": "group",
+                "item": [
+                  {"linkId": "6.1.4.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.4.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.5", "text": "Diabetes", "type": "group",
+                "item": [
+                  {"linkId": "6.1.5.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.5.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.6", "text": "Cancer", "type": "group", "repeats": true,
+                "item": [
+                  {"linkId": "6.1.6.1", "text": "Cancer Type", "type": "string"},
+                  {"linkId": "6.1.6.2", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.6.3", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.7", "text": "Asthma", "type": "group",
+                "item": [
+                  {"linkId": "6.1.7.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.7.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.8", "text": "Thyroid Disease", "type": "group",
+                "item": [
+                  {"linkId": "6.1.8.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.8.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.9", "text": "Osteoporosis", "type": "group",
+                "item": [
+                  {"linkId": "6.1.9.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.9.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.10", "text": "Dementia / Alzheimer's", "type": "group",
+                "item": [
+                  {"linkId": "6.1.10.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.10.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.11", "text": "Mental Health Conditions (e.g., Depression, Anxiety, Bipolar)", "type": "group",
+                "item": [
+                  {"linkId": "6.1.11.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.11.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.12", "text": "Substance Abuse", "type": "group",
+                "item": [
+                  {"linkId": "6.1.12.1", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.12.2", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              },
+              {
+                "linkId": "6.1.13", "text": "Other Genetic Conditions", "type": "group",
+                "item": [
+                  {"linkId": "6.1.13.1", "text": "Specify condition", "type": "string"},
+                  {"linkId": "6.1.13.2", "text": "Relationship(s)", "type": "string"},
+                  {"linkId": "6.1.13.3", "text": "Age at Diagnosis (Approx.)", "type": "integer"}
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "linkId": "social-history",
+        "text": "VII. Social History",
+        "type": "group",
+        "item": [
+          {"linkId": "7.1", "text": "Occupation:", "type": "string"},
+          {"linkId": "7.2", "text": "Highest Level of Education Completed:", "type": "string"},
+          {
+            "linkId": "7.3", "text": "Marital Status:", "type": "choice",
+            "answerOption": [
+              {"valueString": "Single"}, {"valueString": "Married"}, {"valueString": "Partnered"},
+              {"valueString": "Divorced"}, {"valueString": "Widowed"}
+            ]
+          },
+          {
+            "linkId": "7.4", "text": "Living Situation:", "type": "open-choice",
+            "answerOption": [
+              {"valueString": "Live Alone"}, {"valueString": "Live with Spouse/Partner"}, {"valueString": "Live with Family"}
+            ]
+          },
+          {"linkId": "7.5", "text": "Do you feel safe at home?", "type": "boolean"},
+          {
+            "linkId": "7.6", "text": "Tobacco Use", "type": "group",
+            "item": [
+              {
+                "linkId": "7.6.1",
+                "text": "Have you ever smoked cigarettes, cigars, pipes, or used smokeless tobacco?",
+                "type": "boolean"
+              },
+              {
+                "linkId": "7.6.1.1", "text": "If yes, what type?", "type": "string",
+                "enableWhen": [{"question": "7.6.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.6.1.2", "text": "How much per day?", "type": "string",
+                "enableWhen": [{"question": "7.6.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.6.1.3", "text": "For how many years?", "type": "integer",
+                "enableWhen": [{"question": "7.6.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.6.1.4", "text": "If you currently smoke, are you interested in quitting?", "type": "choice",
+                "enableWhen": [{"question": "7.6.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all",
+                "answerOption": [{"valueString": "Yes"}, {"valueString": "No"}, {"valueString": "Maybe"}]
+              },
+              {
+                "linkId": "7.6.1.5", "text": "If you quit, when did you quit? (Year)", "type": "integer",
+                "enableWhen": [{"question": "7.6.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.6.2", "text": "Do you use e-cigarettes or vape?", "type": "boolean"
+              },
+              {
+                "linkId": "7.6.2.1", "text": "If yes, what product/flavor?", "type": "string",
+                "enableWhen": [{"question": "7.6.2", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.6.2.2", "text": "How often?", "type": "string",
+                "enableWhen": [{"question": "7.6.2", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              }
+            ]
+          },
+          {
+            "linkId": "7.7", "text": "Alcohol Use", "type": "group",
+            "item": [
+              {"linkId": "7.7.1", "text": "Do you drink alcohol?", "type": "boolean"},
+              {
+                "linkId": "7.7.1.1", "text": "If yes, how many days per week do you typically drink?", "type": "integer",
+                "enableWhen": [{"question": "7.7.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.7.1.2", "text": "On a typical day when you drink, how many standard drinks do you have? (A standard drink is 12 oz beer, 5 oz wine, or 1.5 oz distilled spirits)", "type": "integer",
+                "enableWhen": [{"question": "7.7.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.7.1.3", "text": "Have you ever felt you needed to cut down on your drinking?", "type": "boolean",
+                "enableWhen": [{"question": "7.7.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.7.1.4", "text": "In the past year, have you had more than 4 drinks (female) or 5 drinks (male) on one occasion?", "type": "boolean",
+                "enableWhen": [{"question": "7.7.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              }
+            ]
+          },
+          {
+            "linkId": "7.8", "text": "Substance Use", "type": "group",
+            "item": [
+              {
+                "linkId": "7.8.1",
+                "text": "Do you currently use or have you in the past used recreational drugs or substances (e.g., marijuana, cocaine, opioids, methamphetamines, etc.)?",
+                "type": "boolean"
+              },
+              {
+                "linkId": "7.8.1.1", "text": "If yes, please specify type and frequency (current or past):", "type": "text",
+                "enableWhen": [{"question": "7.8.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {"linkId": "7.8.2", "text": "Do you misuse prescription medications?", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "7.9", "text": "Diet & Nutrition", "type": "group",
+            "item": [
+              {"linkId": "7.9.1", "text": "How would you describe your diet? (e.g., balanced, vegetarian, vegan, low-salt, low-fat)", "type": "string"},
+              {"linkId": "7.9.2", "text": "How many servings of fruits and vegetables do you eat per day on average?", "type": "integer"},
+              {"linkId": "7.9.3", "text": "How many meals do you typically eat per day?", "type": "integer"},
+              {
+                "linkId": "7.9.4", "text": "Do you have any dietary restrictions or food intolerances?", "type": "boolean",
+                "item": [
+                  {
+                    "linkId": "7.9.4.1", "text": "If yes:", "type": "string",
+                    "enableWhen": [{"question": "7.9.4", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+                  }
+                ]
+              },
+              {
+                "linkId": "7.9.5", "text": "Are you concerned about your weight?", "type": "boolean",
+                "item": [
+                  {
+                    "linkId": "7.9.5.1", "text": "If yes:", "type": "choice",
+                    "enableWhen": [{"question": "7.9.5", "operator": "=", "answerBoolean": true}], "enableBehavior": "all",
+                    "answerOption": [{"valueString": "Want to lose"}, {"valueString": "Want to gain"}]
+                  }
+                ]
+              },
+              {"linkId": "7.9.6", "text": "How much caffeine do you consume daily (coffee, tea, soda, energy drinks)?", "type": "string"}
+            ]
+          },
+          {
+            "linkId": "7.10", "text": "Exercise & Physical Activity", "type": "group",
+            "item": [
+              {"linkId": "7.10.1", "text": "Do you exercise regularly?", "type": "boolean"},
+              {
+                "linkId": "7.10.1.1", "text": "If yes, what type of exercise?", "type": "string",
+                "enableWhen": [{"question": "7.10.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.10.1.2", "text": "How many days per week?", "type": "integer",
+                "enableWhen": [{"question": "7.10.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.10.1.3", "text": "For how long each session? (minutes)", "type": "integer",
+                "enableWhen": [{"question": "7.10.1", "operator": "=", "answerBoolean": true}], "enableBehavior": "all"
+              },
+              {
+                "linkId": "7.10.2", "text": "How would you describe your usual level of physical activity outside of formal exercise?", "type": "choice",
+                "answerOption": [
+                  {"valueString": "Sedentary (mostly sitting)"}, {"valueString": "Light (some walking)"},
+                  {"valueString": "Moderate (on feet often)"}, {"valueString": "Vigorous (physically demanding work/hobbies)"}
+                ]
+              }
+            ]
+          },
+          {
+              "linkId": "7.11", "text": "Sleep", "type": "group",
+              "item": [
+                  {"linkId": "7.11.1", "text": "On average, how many hours of sleep do you get per night?", "type": "decimal"},
+                  {"linkId": "7.11.2", "text": "Do you have trouble falling asleep or staying asleep?", "type": "boolean"},
+                  {"linkId": "7.11.3", "text": "Do you snore loudly?", "type": "boolean"},
+                  {"linkId": "7.11.4", "text": "Has anyone told you that you stop breathing during sleep?", "type": "boolean"},
+                  {"linkId": "7.11.5", "text": "Do you generally feel rested upon waking?", "type": "boolean"}
+              ]
+          },
+          {
+              "linkId": "7.12", "text": "Stress", "type": "group",
+              "item": [
+                  {
+                      "linkId": "7.12.1", "text": "How would you rate your current stress level (1=Low, 10=High)?", "type": "integer",
+                      "extension": [
+                          {
+                              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-min",
+                              "valueInteger": 1
+                          },
+                          {
+                              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-max",
+                              "valueInteger": 10
+                          }
+                      ]
+                  },
+                  {"linkId": "7.12.2", "text": "What are your main sources of stress?", "type": "string"},
+                  {"linkId": "7.12.3", "text": "How do you typically manage stress?", "type": "string"}
+              ]
+          }
+        ]
+      },
+      {
+        "linkId": "review-of-systems",
+        "text": "VIII. Review of Systems",
+        "type": "group",
+        "item": [
+          {"linkId": "8.0", "text": "In the past month, have you had any problems with the following? (Check all that apply)", "type": "display"},
+          {
+            "linkId": "8.1", "text": "General", "type": "group",
+            "item": [
+              {"linkId": "8.1.1", "text": "Unexplained Weight Loss", "type": "boolean"},
+              {"linkId": "8.1.2", "text": "Unexplained Weight Gain", "type": "boolean"},
+              {"linkId": "8.1.3", "text": "Fatigue / Low Energy", "type": "boolean"},
+              {"linkId": "8.1.4", "text": "Fever", "type": "boolean"},
+              {"linkId": "8.1.5", "text": "Chills", "type": "boolean"},
+              {"linkId": "8.1.6", "text": "Night Sweats", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.2", "text": "Skin", "type": "group",
+            "item": [
+              {"linkId": "8.2.1", "text": "Rashes", "type": "boolean"},
+              {"linkId": "8.2.2", "text": "Itching", "type": "boolean"},
+              {"linkId": "8.2.3", "text": "New or Changing Moles", "type": "boolean"},
+              {"linkId": "8.2.4", "text": "Sores that don't heal", "type": "boolean"},
+              {"linkId": "8.2.5", "text": "Hair Loss", "type": "boolean"},
+              {"linkId": "8.2.6", "text": "Nail Changes", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.3", "text": "Head/Eyes/Ears/Nose/Throat (HEENT)", "type": "group",
+            "item": [
+              {"linkId": "8.3.1", "text": "Headaches (New or Worsening)", "type": "boolean"},
+              {"linkId": "8.3.2", "text": "Dizziness / Lightheadedness", "type": "boolean"},
+              {"linkId": "8.3.3", "text": "Vision Changes / Blurred Vision", "type": "boolean"},
+              {"linkId": "8.3.4", "text": "Eye Pain / Redness", "type": "boolean"},
+              {"linkId": "8.3.5", "text": "Hearing Loss / Ringing in Ears", "type": "boolean"},
+              {"linkId": "8.3.6", "text": "Ear Pain / Discharge", "type": "boolean"},
+              {"linkId": "8.3.7", "text": "Nosebleeds", "type": "boolean"},
+              {"linkId": "8.3.8", "text": "Runny Nose / Congestion (Persistent)", "type": "boolean"},
+              {"linkId": "8.3.9", "text": "Sore Throat (Persistent)", "type": "boolean"},
+              {"linkId": "8.3.10", "text": "Hoarseness", "type": "boolean"},
+              {"linkId": "8.3.11", "text": "Trouble Swallowing", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.4", "text": "Cardiovascular (Heart & Blood Vessels)", "type": "group",
+            "item": [
+              {"linkId": "8.4.1", "text": "Chest Pain or Discomfort", "type": "boolean"},
+              {"linkId": "8.4.2", "text": "Palpitations (Irregular/Fast Heartbeat)", "type": "boolean"},
+              {"linkId": "8.4.3", "text": "Shortness of Breath with Activity", "type": "boolean"},
+              {"linkId": "8.4.4", "text": "Shortness of Breath when Lying Flat", "type": "boolean"},
+              {"linkId": "8.4.5", "text": "Swelling in Legs/Ankles/Feet", "type": "boolean"},
+              {"linkId": "8.4.6", "text": "Leg Pain with Walking (Claudication)", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.5", "text": "Respiratory (Lungs)", "type": "group",
+            "item": [
+              {"linkId": "8.5.1", "text": "Cough (Persistent)", "type": "boolean"},
+              {"linkId": "8.5.2", "text": "Wheezing", "type": "boolean"},
+              {"linkId": "8.5.3", "text": "Shortness of Breath at Rest", "type": "boolean"},
+              {"linkId": "8.5.4", "text": "Coughing up Blood", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.6", "text": "Gastrointestinal (Stomach & Bowels)", "type": "group",
+            "item": [
+              {"linkId": "8.6.1", "text": "Nausea / Vomiting", "type": "boolean"},
+              {"linkId": "8.6.2", "text": "Heartburn / Indigestion (Frequent)", "type": "boolean"},
+              {"linkId": "8.6.3", "text": "Abdominal Pain", "type": "boolean"},
+              {"linkId": "8.6.4", "text": "Change in Bowel Habits", "type": "boolean"},
+              {"linkId": "8.6.5", "text": "Diarrhea", "type": "boolean"},
+              {"linkId": "8.6.6", "text": "Constipation", "type": "boolean"},
+              {"linkId": "8.6.7", "text": "Blood in Stool / Black Tarry Stools", "type": "boolean"},
+              {"linkId": "8.6.8", "text": "Jaundice (Yellowing of Skin/Eyes)", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.7", "text": "Genitourinary (Kidneys, Bladder, Genitals)", "type": "group",
+            "item": [
+              {"linkId": "8.7.1", "text": "Pain or Burning with Urination", "type": "boolean"},
+              {"linkId": "8.7.2", "text": "Frequent Urination", "type": "boolean"},
+              {"linkId": "8.7.3", "text": "Urgent Need to Urinate", "type": "boolean"},
+              {"linkId": "8.7.4", "text": "Blood in Urine", "type": "boolean"},
+              {"linkId": "8.7.5", "text": "Difficulty Starting or Stopping Urine Stream", "type": "boolean"},
+              {"linkId": "8.7.6", "text": "Urinary Incontinence (Leakage)", "type": "boolean"},
+              {"linkId": "8.7.7", "text": "(For Males) Testicular Pain or Lumps", "type": "boolean"},
+              {"linkId": "8.7.8", "text": "(For Females) Vaginal Discharge / Itching / Sores", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.8", "text": "Musculoskeletal (Muscles & Joints)", "type": "group",
+            "item": [
+              {"linkId": "8.8.1", "text": "Joint Pain / Swelling / Stiffness", "type": "boolean"},
+              {"linkId": "8.8.2", "text": "Muscle Pain / Weakness", "type": "boolean"},
+              {"linkId": "8.8.3", "text": "Back Pain", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.9", "text": "Neurological (Nerves & Brain)", "type": "group",
+            "item": [
+              {"linkId": "8.9.1", "text": "Numbness / Tingling", "type": "boolean"},
+              {"linkId": "8.9.2", "text": "Weakness in Arms or Legs", "type": "boolean"},
+              {"linkId": "8.9.3", "text": "Tremors", "type": "boolean"},
+              {"linkId": "8.9.4", "text": "Seizures", "type": "boolean"},
+              {"linkId": "8.9.5", "text": "Memory Problems / Confusion", "type": "boolean"},
+              {"linkId": "8.9.6", "text": "Fainting / Blackouts", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.10", "text": "Endocrine (Glands & Hormones)", "type": "group",
+            "item": [
+              {"linkId": "8.10.1", "text": "Excessive Thirst", "type": "boolean"},
+              {"linkId": "8.10.2", "text": "Excessive Hunger", "type": "boolean"},
+              {"linkId": "8.10.3", "text": "Heat or Cold Intolerance", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.11", "text": "Hematologic/Lymphatic (Blood & Lymph Nodes)", "type": "group",
+            "item": [
+              {"linkId": "8.11.1", "text": "Easy Bruising or Bleeding", "type": "boolean"},
+              {"linkId": "8.11.2", "text": "Swollen Glands (Lymph Nodes)", "type": "boolean"}
+            ]
+          },
+          {
+            "linkId": "8.12", "text": "Psychiatric (Mental & Emotional Health)", "type": "group",
+            "item": [
+              {"linkId": "8.12.1", "text": "Feeling Sad or Hopeless (Depressed Mood)", "type": "boolean"},
+              {"linkId": "8.12.2", "text": "Loss of Interest or Pleasure in Activities", "type": "boolean"},
+              {"linkId": "8.12.3", "text": "Feeling Anxious, Nervous, or On Edge", "type": "boolean"},
+              {"linkId": "8.12.4", "text": "Excessive Worry", "type": "boolean"},
+              {"linkId": "8.12.5", "text": "Trouble Concentrating", "type": "boolean"},
+              {"linkId": "8.12.6", "text": "Thoughts of Harming Yourself or Others", "type": "boolean"},
+              {"linkId": "8.12.7", "text": "Hallucinations / Delusions", "type": "boolean"}
+            ]
+          }
+        ]
+      },
+      {
+          "linkId": "preventive-health",
+          "text": "IX. Preventive Health & Screenings",
+          "type": "group",
+          "item": [
+              {"linkId": "9.0", "text": "Please provide the approximate date of your last: (MM/YYYY or Year)", "type": "display"},
+              {"linkId": "9.1", "text": "Complete Physical Exam:", "type": "string"},
+              {"linkId": "9.2", "text": "Dental Exam:", "type": "string"},
+              {"linkId": "9.3", "text": "Eye Exam:", "type": "string"},
+              {"linkId": "9.4", "text": "Flu Shot:", "type": "string"},
+              {
+                  "linkId": "9.5", "text": "Pneumonia Vaccine:", "type": "string",
+                  "item": [{
+                      "linkId": "9.5.1", "text": "If yes, which type: PCV13/PPSV23/PCV20?", "type": "string",
+                      "enableWhen": [{"question": "9.5", "operator": "exists", "answerBoolean": true}],
+                      "enableBehavior": "all"
+                  }]
+              },
+              {"linkId": "9.6", "text": "Shingles Vaccine (Shingrix): (If applicable, age 50+)", "type": "string"},
+              {"linkId": "9.7", "text": "Tetanus Booster (Td/Tdap): (Within last 10 years?)", "type": "string"},
+              {"linkId": "9.8", "text": "COVID-19 Vaccination/Booster: (Last dose)", "type": "string"},
+              {
+                  "linkId": "9.9", "text": "Tuberculosis (TB) Test (PPD/Blood Test):", "type": "string",
+                  "item": [{"linkId": "9.9.1", "text": "Result:", "type": "string"}]
+              },
+              {"linkId": "9.10", "text": "Cholesterol Check (Lipid Panel):", "type": "string"},
+              {"linkId": "9.11", "text": "Blood Sugar Check (Glucose/A1c):", "type": "string"},
+              {
+                  "linkId": "9.12", "text": "Colonoscopy (or other colon cancer screening):", "type": "string",
+                  "item": [
+                      {"linkId": "9.12.1", "text": "Type:", "type": "string"},
+                      {"linkId": "9.12.2", "text": "Result:", "type": "string"},
+                      {"linkId": "9.12.3", "text": "If screening other than colonoscopy, when is colonoscopy recommended?", "type": "string"}
+                  ]
+              },
+              {
+                  "linkId": "9.13", "text": "For Women:", "type": "group",
+                  "item": [
+                      {"linkId": "9.13.1", "text": "Last Menstrual Period (LMP):", "type": "string"},
+                      {"linkId": "9.13.1.1", "text": "OR Menopausal", "type": "boolean"},
+                      {"linkId": "9.13.2", "text": "Age at Menarche (first period):", "type": "integer"},
+                      {"linkId": "9.13.3", "text": "Age at Menopause (if applicable):", "type": "integer"},
+                      {
+                          "linkId": "9.13.4", "text": "Are your periods regular?", "type": "choice",
+                          "answerOption": [{"valueString": "Yes"}, {"valueString": "No"}, {"valueString": "N/A"}]
+                      },
+                      {
+                          "linkId": "9.13.5", "text": "Any bleeding after menopause?", "type": "choice",
+                          "answerOption": [{"valueString": "Yes"}, {"valueString": "No"}, {"valueString": "N/A"}]
+                      },
+                      {"linkId": "9.13.6", "text": "Number of Pregnancies:", "type": "integer"},
+                      {"linkId": "9.13.7", "text": "Number of Live Births:", "type": "integer"},
+                      {"linkId": "9.13.8", "text": "Miscarriages/Abortions:", "type": "integer"},
+                      {"linkId": "9.13.9", "text": "Any complications with pregnancy/delivery?", "type": "string"},
+                      {"linkId": "9.13.10", "text": "Method of Contraception (if applicable):", "type": "string"},
+                      {
+                          "linkId": "9.13.11", "text": "Last Pap Smear:", "type": "string",
+                          "item": [{"linkId": "9.13.11.1", "text": "Result:", "type": "string"}]
+                      },
+                      {
+                          "linkId": "9.13.12", "text": "Last HPV Test (if separate from Pap):", "type": "string",
+                          "item": [{"linkId": "9.13.12.1", "text": "Result:", "type": "string"}]
+                      },
+                      {
+                          "linkId": "9.13.13", "text": "Last Mammogram:", "type": "string",
+                          "item": [{"linkId": "9.13.13.1", "text": "Result:", "type": "string"}]
+                      },
+                      {
+                          "linkId": "9.13.14", "text": "Bone Density Scan (DEXA):", "type": "string",
+                          "item": [{"linkId": "9.13.14.1", "text": "Result:", "type": "string"}]
+                      }
+                  ]
+              },
+              {
+                  "linkId": "9.14", "text": "For Men:", "type": "group",
+                  "item": [
+                      {"linkId": "9.14.1", "text": "Last Prostate Exam (DRE):", "type": "string"},
+                      {
+                          "linkId": "9.14.2", "text": "Last PSA Blood Test:", "type": "string",
+                          "item": [{"linkId": "9.14.2.1", "text": "Result:", "type": "string"}]
+                      },
+                      {"linkId": "9.14.3", "text": "Have you ever been told you have an enlarged prostate (BPH)?", "type": "boolean"}
+                  ]
+              }
+          ]
+      },
+      {
+          "linkId": "mental-wellness-screen",
+          "text": "X. Mental Wellness Screen (Optional, but Recommended)",
+          "type": "group",
+          "item": [
+              {
+                  "linkId": "10.1",
+                  "text": "Over the last 2 weeks, how often have you been bothered by any of the following problems? (0 = Not at all, 1 = Several days, 2 = More than half the days, 3 = Nearly every day)",
+                  "type": "group",
+                  "code": [{"system": "http://loinc.org", "code": "69735-3", "display": "PHQ-9 quick depression assessment panel"}],
+                  "item": [
+                      {"linkId": "10.1.1", "text": "Little interest or pleasure in doing things", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.2", "text": "Feeling down, depressed, or hopeless", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.3", "text": "Trouble falling or staying asleep, or sleeping too much", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.4", "text": "Feeling tired or having little energy", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.5", "text": "Poor appetite or overeating", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.6", "text": "Feeling bad about yourself - or that you are a failure or have let yourself or your family down", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.7", "text": "Trouble concentrating on things, such as reading the newspaper or watching television", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.8", "text": "Moving or speaking so slowly that other people could have noticed? Or the opposite - being so fidgety or restless that you have been moving around a lot more than usual", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.1.9", "text": "Thoughts that you would be better off dead, or of hurting yourself in some way", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]}
+                  ]
+              },
+              {
+                  "linkId": "10.2",
+                  "text": "Over the last 2 weeks, how often have you been bothered by the following problems? (0 = Not at all, 1 = Several days, 2 = More than half the days, 3 = Nearly every day)",
+                  "type": "group",
+                  "code": [{"system": "http://loinc.org", "code": "69726-2", "display": "GAD-7 quick anxiety assessment panel"}],
+                  "item": [
+                      {"linkId": "10.2.1", "text": "Feeling nervous, anxious, or on edge", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.2.2", "text": "Not being able to stop or control worrying", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.2.3", "text": "Worrying too much about different things", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.2.4", "text": "Trouble relaxing", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.2.5", "text": "Being so restless that it is hard to sit still", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.2.6", "text": "Becoming easily annoyed or irritable", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]},
+                      {"linkId": "10.2.7", "text": "Feeling afraid as if something awful might happen", "type": "choice", "answerOption": [{"valueInteger": 0, "display": "Not at all"}, {"valueInteger": 1, "display": "Several days"}, {"valueInteger": 2, "display": "More than half the days"}, {"valueInteger": 3, "display": "Nearly every day"}]}
+                  ]
+              }
+          ]
+      },
+      {
+          "linkId": "advance-directives",
+          "text": "XI. Advance Directives",
+          "type": "group",
+          "item": [
+              {
+                  "linkId": "11.1", "text": "Do you have a Living Will?", "type": "choice",
+                  "answerOption": [{"valueCoding": {"code": "LA33-6", "system": "http://loinc.org", "display":"Yes"}}, {"valueCoding": {"code": "LA32-8", "system": "http://loinc.org", "display":"No"}}, {"valueCoding": {"code": "LA4489-6", "system": "http://loinc.org", "display":"Unsure"}}]
+              },
+              {
+                  "linkId": "11.2", "text": "Do you have a Healthcare Power of Attorney (Healthcare Proxy)?", "type": "choice",
+                  "answerOption": [{"valueCoding": {"code": "LA33-6", "system": "http://loinc.org", "display":"Yes"}}, {"valueCoding": {"code": "LA32-8", "system": "http://loinc.org", "display":"No"}}, {"valueCoding": {"code": "LA4489-6", "system": "http://loinc.org", "display":"Unsure"}}]
+              },
+              {
+                  "linkId": "11.2.1", "text": "If yes, Name of Agent:", "type": "string",
+                  "enableWhen": [{"question": "11.2", "operator": "=", "answerCoding": {"code": "LA33-6", "system": "http://loinc.org"}}], "enableBehavior": "all"
+              },
+              {
+                  "linkId": "11.2.2", "text": "Phone:", "type": "string",
+                  "enableWhen": [{"question": "11.2", "operator": "=", "answerCoding": {"code": "LA33-6", "system": "http://loinc.org"}}], "enableBehavior": "all"
+              },
+              {
+                  "linkId": "11.3", "text": "Would you like information about Advance Directives?", "type": "boolean"
+              }
+          ]
+      },
+      {
+          "linkId": "signature-date",
+          "text": "Thank you for taking the time to complete this questionnaire.",
+          "type": "group",
+          "item": [
+              {
+                  "linkId": "12.1",
+                  "text": "Patient Signature:",
+                  "type": "attachment"
+              },
+              {
+                  "linkId": "12.2",
+                  "text": "Date:",
+                  "type": "date"
+              }
+          ]
+      }
+    ]
+  }
