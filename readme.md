@@ -1,6 +1,6 @@
 # Conversational Medical Intake App (Prototype)
 
-This is a local prototype of a conversational medical intake app. It uses a chat interface powered by an LLM (OpenAI or Gemini) to interview patients in natural language using questionnaires defined in FHIR Questionnaire JSON.
+This is a prototype of a conversational medical intake app. It uses a chat interface powered by an LLM (OpenAI or Gemini) to interview patients in natural language using questionnaires defined in FHIR Questionnaire JSON. It runs locally using Node, vite and the local browser.
 
 ## Features
 - Multi-page app with navigation:
