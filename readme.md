@@ -1,11 +1,11 @@
 # Conversational Medical Intake App (Prototype)
 
-This is a prototype of a conversational medical intake app. It uses a chat interface powered by an LLM (OpenAI or Gemini) to interview patients in natural language using questionnaires defined in FHIR Questionnaire JSON. It runs locally using Node, vite and the local browser.
+This is a prototype of a conversational medical intake app. It uses a chat interface powered by an LLM (OpenAI or Gemini) to interview patients in natural language using questionnaires defined in FHIR Questionnaire JSON. It runs locally using Node, Vite, and the local browser.
 
 ## Features
 - Multi-page app with navigation:
   1. **Questionnaire Import:** Paste, upload, or extract from PDF a FHIR Questionnaire JSON or Markdown. Transform Markdown or extracted PDF text to FHIR JSON using Gemini LLM (no regex). Upload FHIR JSON directly. Save the questionnaire to the catalog for use in the interview.
-  2. **Chat Interview:** Conversational intake flow, driven by the loaded FHIR Questionnaire. Hybrid scoring system (0–4 scale) for each symptom. Chips-only UI for questions with a small number of options (configurable).
+  2. **Chat Interview:** Conversational intake flow, driven by the loaded FHIR Questionnaire. Hybrid scoring system (0–4 scale) for each symptom, with support for FHIR itemWeight extensions. Chips-only UI for questions with a small number of options (configurable).
   3. **Logs:** View, download, or delete chat logs (Markdown and FHIR JSON) in a full-page UI.
   4. **Catalog:** View, rename, delete, and start chat with any saved questionnaire. Toggle between raw JSON and a human-readable summary of questions/answers.
 - Responsive chat UI (works on mobile and desktop)
@@ -22,6 +22,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - **Navigation tabs always match the current page, even after programmatic navigation.**
 
 ## Key Updates (2024-06)
+- **Vite-based UI:** The app is now built and run using Vite for faster development and modern tooling.
 - **PDF Upload & Extraction:** Upload a PDF, extract text in-browser, and convert to FHIR JSON using the LLM workflow.
 - **FHIR JSON Upload:** Upload a FHIR Questionnaire JSON file directly.
 - **Import Page Workflow:** All controls (Upload PDF, Convert to FHIR, Upload FHIR JSON, Save to Catalog, Reset) are above a single scrollable text box. Button order matches the logical workflow. Only Save to Catalog is enabled for valid FHIR JSON.
@@ -29,6 +30,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - **Catalog Summary Toggle:** In the Catalog viewer, toggle between raw JSON and a human-readable summary of questions and answer options.
 - **No 'Import for Chat':** Users start a chat from the Catalog page, not from Import.
 - **Chips-Only UI:** For questions with <= threshold options, only chips and skip are shown (no free text input).
+- **FHIR Scoring:** The app supports FHIR itemWeight extensions for answer scoring, automatically summing scores for each session and displaying the grand total at the end of the interview and in logs.
 
 ## Configuration
 - You can set the chips threshold in your `.env` file:
@@ -52,7 +54,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 ```
 
 - The navigation order is: Home, Import, Catalog, Chat, Logs.
-- The Import Page is for adding new questionnaires (Markdown, FHIR JSON, or PDF), converting, and saving to the catalog. All controls are above the text box. No 'Import for Chat' button.
+- The Import Page is for adding new questionnaires (Markdown, FHIR JSON, or PDF), converting, and saving to the catalog. All controls are above the text box. No 'Import for Chat' button. The Import page does not load from the catalog.
 - The Catalog Page lists all saved questionnaires and allows starting a new chat/interview for each entry ("Start Chat" button). Editing, renaming, deleting, and toggling between JSON and summary are available.
 - The Chat Page is used to conduct the interview. If accessed directly, the user can select a questionnaire from the catalog.
 
