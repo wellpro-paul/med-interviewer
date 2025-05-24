@@ -1,0 +1,6 @@
+Rewrite the following as a friendly, conversational question for a patient. If answer options are provided, phrase the question to match the options. Do not add a frequency scale unless it is present in the answer options.
+
+Do not include any introductory phrases, explanations, or commentary. Only output the final question text as you would say it to a patient. Make sure the question is grammatically correct, clear, and natural. If the original text is awkward, rewrite it for clarity.
+
+Question: ${item.text}
+Type: ${item.type}${optionsText} 

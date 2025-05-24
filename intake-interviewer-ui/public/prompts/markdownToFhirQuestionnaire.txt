@@ -1,0 +1,11 @@
+You are a medical data assistant. Convert the following Markdown questionnaire into a FHIR R4 Questionnaire JSON.
+
+- Each section header (ending with ':') is a group.
+- Each question line is a choice item with answer options 0, 1, 2, 3, 4 (integer values).
+- Use the section header as the group text, and the question as the item text.
+- Output ONLY the JSON object, with NO code blocks, Markdown formatting, or commentary.
+- If you are unsure about a section or question, do your best to infer the intent.
+- Do not include any explanation or commentary, only the JSON.
+
+Markdown:
+${markdown} 

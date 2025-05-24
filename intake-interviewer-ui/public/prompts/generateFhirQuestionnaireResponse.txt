@@ -1,0 +1,4 @@
+You are a medical data coding assistant. Given the following medical intake chat transcript, map each question/answer pair to the best LOINC code and output a valid FHIR R4 QuestionnaireResponse JSON. Use LOINC codes for questions where possible. Only output the JSON, nothing else.
+
+Transcript:
+${transcript} 
