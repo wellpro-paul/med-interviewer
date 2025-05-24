@@ -21,7 +21,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - Domain-specific prompt/rules for medical best practices (e.g., only consider biological relatives for family history, clarify ambiguous answers, etc.)
 - Guided by questions from a source questionnaire (FHIR, Markdown, or PDF)
 - **Navigation tabs always match the current page, even after programmatic navigation.**
-- **LLM prompts are now loaded from editable text files in `src/prompts/`** (for conversion, FHIR export, and conversational phrasing). See below for details.
+- **LLM prompts are now loaded from editable text files in `intake-interviewer-ui/public/prompts/`** (for conversion, FHIR export, and conversational phrasing). See below for details.
 
 ## Key Updates (2024-06)
 - **Vite-based UI:** The app is now built and run using Vite for faster development and modern tooling.
@@ -34,7 +34,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - **Chips-Only UI:** For questions with <= threshold options, only chips and skip are shown (no free text input).
 - **FHIR Scoring:** The app supports FHIR itemWeight extensions for answer scoring, automatically summing scores for each session and displaying the grand total at the end of the interview and in logs.
 - **Download All Logs:** Download all chat logs as a zip file, with filenames including ISO date/time and questionnaire title for easy sorting.
-- **Prompt Customization:** LLM prompts for conversion, FHIR export, and conversational phrasing are now loaded from editable text files in `src/prompts/`.
+- **Prompt Customization:** LLM prompts for conversion, FHIR export, and conversational phrasing are now loaded from editable text files in `intake-interviewer-ui/public/prompts`.
 - **Debug: End Chat Early:** A small debug button lets you end a chat early and log the partial session for troubleshooting LLM issues.
 
 ## Configuration
@@ -65,8 +65,8 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - The Logs Page allows you to view, download, or delete chat logs. You can also download all logs as a zip file, with filenames that include the date, time, and questionnaire title.
 
 ## LLM Prompt Customization
-- All LLM prompts (for Markdown-to-FHIR conversion, FHIR export, and conversational phrasing) are now loaded from editable text files in `src/prompts/`.
-- To customize the app's behavior, simply edit the relevant `.txt` files in `src/prompts/`.
+- All LLM prompts (for Markdown-to-FHIR conversion, FHIR export, and conversational phrasing) are now loaded from editable text files in `intake-interviewer-ui/public/prompts`.
+- To customize the app's behavior, simply edit the relevant `.txt` files in `intake-interviewer-ui/public/prompts`.
 - **Future:** The app may include a UI for editing these prompts directly from the browser (admin-only feature).
 
 ## Extensibility

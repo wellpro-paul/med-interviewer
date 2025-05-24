@@ -24,7 +24,7 @@
 - **Prompt instructs AI to ask for a numeric score (0–4) for each symptom, summarize section/grand totals, and accept both button and typed input.**
 - Specialized post-chat prompt for mapping transcript to FHIR QuestionnaireResponse with LOINC codes
 - **Markdown-to-FHIR conversion is LLM-powered (Gemini).**
-- **All LLM prompts (for conversion, FHIR export, and conversational phrasing) are now loaded from editable text files in `src/prompts/`.**
+- **All LLM prompts (for conversion, FHIR export, and conversational phrasing) are now loaded from editable text files in `intake-interviewer-ui/public/prompts/`.**
 - (Future) UI-based prompt editor for admins to edit prompts in-app.
 - For very large Markdown or PDF questionnaires, chunking may be required for reliable LLM conversion.
 
