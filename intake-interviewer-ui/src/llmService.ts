@@ -164,7 +164,12 @@ export async function markdownToFhirQuestionnaire(markdown: string): Promise<any
   if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found in Gemini response. Raw response: ' + response);
   const jsonString = cleaned.slice(jsonStart, jsonEnd + 1);
   try {
-    return JSON.parse(jsonString);
+    const questionnaire = JSON.parse(jsonString);
+    // After successfully parsing the questionnaire, add conversational text to its items.
+    if (questionnaire.item && Array.isArray(questionnaire.item)) {
+      await addConversationalTextToItems(questionnaire.item);
+    }
+    return questionnaire;
   } catch (e) {
     throw new Error('Failed to parse FHIR JSON from Gemini response: ' + (e as Error).message + '\nRaw response: ' + response);
   }
@@ -208,46 +213,239 @@ export async function generateConversationalTextForItem(item: any): Promise<stri
     const response = await sendMessageToLLM(messages);
     return response.trim();
   } catch (e) {
+    // If LLM fails, fall back to original text
+    console.warn(`Failed to generate conversational text for item: "${item.text}". Error: ${e}`);
     return item.text || '';
   }
 }
 
 /**
- * Recursively add conversationalText to all items in a FHIR Questionnaire using Gemini.
- * Mutates the items in place.
- * @param items The array of FHIR Questionnaire items
+ * Generates conversational text for a batch of questionnaire items using the LLM.
+ * @param items An array of items, each with an 'id' and 'text' property.
+ * @returns A promise that resolves to a record mapping item IDs to conversational text.
  */
-export async function addConversationalTextToItems(items: any[]): Promise<void> {
-  if (!Array.isArray(items)) return;
-  for (const item of items) {
-    if (item.text) {
+export async function generateConversationalTextForItemsBatch(
+  items: Array<{id: string; text: string}>
+): Promise<Record<string, string>> {
+  if (items.length === 0) {
+    return {};
+  }
+  const promptTemplate = await loadPrompt('generateConversationalTextForItemsBatch'); // This prompt was created in a previous step
+  const formattedPrompt = promptTemplate.replaceAll('{{items}}', JSON.stringify(items));
+
+  console.log(
+    `Generating conversational text for batch of ${items.length} items.`
+  );
+
+  const messages: LLMMessage[] = [{role: 'user', content: formattedPrompt}];
+
+  try {
+    const result = await callGemini(messages); // Using callGemini directly as per existing patterns
+
+    // The LLM might return a string enclosed in ```json ... ```, so we need to extract the JSON part.
+    const jsonMatch = result.match(/```json\n([\s\S]*?)\n```/);
+    let parsedResult: Record<string, string>;
+
+    if (jsonMatch && jsonMatch[1]) {
+      parsedResult = JSON.parse(jsonMatch[1]);
+    } else {
+      // If no ```json ... ``` block is found, try to parse the whole string.
+      // This handles cases where the LLM might not perfectly adhere to the ```json block format.
       try {
-        item.conversationalText = await generateConversationalTextForItem(item);
-      } catch (e) {
-        item.conversationalText = item.text;
+        parsedResult = JSON.parse(result);
+      } catch (parseError) {
+        console.error('Error parsing LLM response for batch conversational text. Raw response:', result, 'Parse error:', parseError);
+        // Fallback: attempt to create a result for items where text might be the raw output, if desperate
+        const fallbackResult: Record<string, string> = {};
+        items.forEach(item => {
+          // This is a very basic fallback, assuming the LLM might have just returned text for the *first* item
+          // or some other non-JSON compliant string. It's unlikely to be correct for all items.
+          if (items.length === 1) fallbackResult[item.id] = result; // If only one item, maybe the result is its text
+          else fallbackResult[item.id] = item.text; // Default to original text on parse failure for multiple items
+        });
+        return fallbackResult;
       }
     }
-    if (Array.isArray(item.item)) {
-      await addConversationalTextToItems(item.item);
+
+    // Validate that the parsed result is a Record<string, string>
+    if (
+      typeof parsedResult === 'object' &&
+      parsedResult !== null &&
+      Object.keys(parsedResult).length > 0 && // Ensure it's not an empty object if items were processed
+      Object.values(parsedResult).every(value => typeof value === 'string')
+    ) {
+      return parsedResult;
+    } else {
+      console.error(
+        'Parsed LLM response is not in the expected format (Record<string, string>):',
+        parsedResult,
+        'Raw LLM response:', result
+      );
+      // Fallback for unexpected structure
+      const fallbackResult: Record<string, string> = {};
+      items.forEach(item => fallbackResult[item.id] = item.text); // Default to original text
+      return fallbackResult;
     }
+  } catch (error) {
+    console.error('Error calling LLM for batch conversational text:', error);
+    // Fallback: return original texts for all items in the batch
+    const fallbackResult: Record<string, string> = {};
+    items.forEach(item => fallbackResult[item.id] = item.text);
+    return fallbackResult;
   }
+}
+
+interface ItemWithTempId extends fhir4.QuestionnaireItem {
+  _tempId?: string; // Temporary id for batch processing
+}
+
+// Helper function to recursively collect items needing conversational text
+function collectItemsForBatchProcessing(
+  items: ItemWithTempId[],
+  collection: Array<{id: string; text: string}>,
+  idPrefix: string = 'item'
+): void {
+  if (!Array.isArray(items)) return;
+
+  items.forEach((item, index) => {
+    // Ensure each item has a unique temporary ID for this batch operation.
+    // We use _tempId to avoid conflicts if item.id or item.linkId is already used for other purposes.
+    item._tempId = item.linkId || `${idPrefix}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+    // Check if item has text and doesn't already have conversational text
+    // Also, ensure it's not a display item, as they don't need conversational text.
+    if (item.text && !item.conversationalText && item.type !== 'display') {
+      collection.push({id: item._tempId, text: item.text});
+    }
+
+    // Recursively process sub-items
+    if (Array.isArray(item.item)) {
+      collectItemsForBatchProcessing(item.item as ItemWithTempId[], collection, item._tempId);
+    }
+  });
+}
+
+// Helper function to recursively apply conversational text from batch results
+function applyBatchResultsToItems(
+  items: ItemWithTempId[],
+  batchResults: Record<string, string>
+): void {
+  if (!Array.isArray(items)) return;
+
+  items.forEach(item => {
+    if (item._tempId && batchResults[item._tempId]) {
+      item.conversationalText = batchResults[item._tempId];
+    }
+    // Clean up temporary ID after processing
+    // delete item._tempId; // Keep for now for easier debugging if needed, can be removed later
+
+    if (Array.isArray(item.item)) {
+      applyBatchResultsToItems(item.item as ItemWithTempId[], batchResults);
+    }
+  });
+}
+
+/**
+ * Recursively add conversationalText to all items in a FHIR Questionnaire using batch LLM calls.
+ * Mutates the items in place.
+ * @param items The array of FHIR Questionnaire items (or any compatible structure with .text, .item fields)
+ */
+export async function addConversationalTextToItems(items: any[]): Promise<void> {
+  if (!Array.isArray(items) || items.length === 0) return;
+
+  const itemsToProcess: Array<{id: string; text: string}> = [];
+  // Cast to ItemWithTempId[] for internal processing that adds temporary '_tempId'
+  const itemsWithTempIds = items as ItemWithTempId[];
+
+  collectItemsForBatchProcessing(itemsWithTempIds, itemsToProcess);
+
+  if (itemsToProcess.length > 0) {
+    const batchResults = await generateConversationalTextForItemsBatch(itemsToProcess);
+    applyBatchResultsToItems(itemsWithTempIds, batchResults);
+  }
+  // The items array (itemsWithTempIds) has been mutated with conversationalText.
+  // No need to return it explicitly as the input array is modified directly.
 }
 
 /**
  * Conduct a full conversational interview using the entire FHIR Questionnaire JSON.
  * The LLM is instructed to act as an interviewer, asking questions in a natural order and collecting answers.
- * @param questionnaireJson The full FHIR Questionnaire JSON (object or string)
- * @param chatHistory The conversation so far (as a string transcript)
- * @returns The LLM's next message (next question or summary)
+ * Conduct a full conversational interview using the LLM.
+ * The LLM is instructed to act as an interviewer, asking questions based on the provided context
+ * and returning a structured JSON response indicating the next action.
+ * @param unansweredQuestions Array of questionnaire items yet to be answered.
+ * @param answeredQuestions Array of questions already answered by the user.
+ * @param chatHistory The conversation so far (as a string transcript).
+ * @returns A promise that resolves to a parsed JSON object from the LLM, conforming to the specified output structure.
  */
-export async function conductFullQuestionnaireInterview(questionnaireJson: any, chatHistory: string): Promise<string> {
+export async function conductFullQuestionnaireInterview(
+  unansweredQuestions: any[],
+  answeredQuestions: any[],
+  chatHistory: string
+): Promise<any> { // The return type will be the parsed JSON object from the LLM
   const promptTemplate = await loadPrompt('fullQuestionnaireInterview');
-  const questionnaireStr = typeof questionnaireJson === 'string' ? questionnaireJson : JSON.stringify(questionnaireJson, null, 2);
+
+  const unansweredQuestionsJson = JSON.stringify(unansweredQuestions);
+  const answeredQuestionsJson = JSON.stringify(answeredQuestions);
+
   const prompt = promptTemplate
-    .replaceAll('${questionnaireJson}', questionnaireStr)
-    .replaceAll('${chatHistory}', chatHistory);
+    .replaceAll('{{unanswered_questions}}', unansweredQuestionsJson)
+    .replaceAll('{{answered_questions}}', answeredQuestionsJson)
+    .replaceAll('{{chat_history}}', chatHistory);
+
   const messages: LLMMessage[] = [
     { role: 'user', content: prompt }
   ];
-  return sendMessageToLLM(messages);
+
+  try {
+    const llmResponse = await sendMessageToLLM(messages);
+    
+    // Attempt to parse the LLM's response as JSON
+    let parsedResponse;
+    try {
+      // The LLM might return a string enclosed in ```json ... ```, so extract the JSON part.
+      const jsonMatch = llmResponse.match(/```json\n([\s\S]*?)\n```/);
+      if (jsonMatch && jsonMatch[1]) {
+        parsedResponse = JSON.parse(jsonMatch[1]);
+      } else {
+        // If no ```json ... ``` block is found, try to parse the whole string.
+        parsedResponse = JSON.parse(llmResponse);
+      }
+    } catch (e) {
+      console.error("Failed to parse LLM response JSON:", e);
+      console.error("Raw LLM Response:", llmResponse);
+      return {
+        action: "error",
+        text_response: "Sorry, I had trouble understanding that. Could you try rephrasing?",
+        linkId_asked: null,
+        linkId_clarify: null,
+        requires_answer_options: false
+      };
+    }
+
+    // Validate the structure of the parsed response (basic validation)
+    if (!parsedResponse.action || !parsedResponse.text_response) {
+      console.error("LLM response JSON is missing required fields (action or text_response). Parsed response:", parsedResponse);
+      console.error("Raw LLM Response:", llmResponse);
+      return {
+        action: "error",
+        text_response: "Sorry, I received an unexpected response. Please try again.",
+        linkId_asked: null,
+        linkId_clarify: null,
+        requires_answer_options: false
+      };
+    }
+
+    return parsedResponse;
+
+  } catch (error) {
+    console.error("Error in conductFullQuestionnaireInterview calling LLM:", error);
+    return {
+      action: "error",
+      text_response: "Sorry, there was an error communicating with the AI. Please try again later.",
+      linkId_asked: null,
+      linkId_clarify: null,
+      requires_answer_options: false
+    };
+  }
 }

@@ -8,99 +8,220 @@ const mockScrollIntoView = jest.fn();
 const originalScrollIntoView = Element.prototype.scrollIntoView;
 Element.prototype.scrollIntoView = mockScrollIntoView;
 
-// Mock the useRef hook to return a ref object with current initially null
-const mockMessagesEndRef = { current: null };
-jest.spyOn(React, 'useRef').mockReturnValue(mockMessagesEndRef);
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { QuestionnaireContext } from './App'; // Assuming context is exported from App.tsx
 
-// Mock useEffect to prevent the scrolling effect from running
-// const originalUseEffect = React.useEffect;
-// jest.spyOn(React, 'useEffect').mockImplementation((effect, dependencies) => {
-//   // Check if this is the scrolling effect by inspecting its dependency array
-//   // This is a heuristic and might need adjustment if the dependency array changes
-//   if (Array.isArray(dependencies) && dependencies.length === 1 && dependencies[0] === messages) {
-//     // Prevent the scrolling effect from running
-//     return;
-//   } else {
-//     // Allow other effects to run normally
-//     return originalUseEffect(effect, dependencies);
-//   }
-// });
+// Mock Element.prototype.scrollIntoView
+Element.prototype.scrollIntoView = jest.fn();
 
-// Mock the sendMessageToLLM and generateFhirQuestionnaireResponse functions from llmService
-jest.mock('./llmService', () => ({
-  sendMessageToLLM: jest.fn(() => Promise.resolve('Mock bot reply')),
-  generateFhirQuestionnaireResponse: jest.fn(() => Promise.resolve({})) // Mock with an empty object or a minimal FHIR structure
-}));
+// Mock llmService comprehensively
+const mockLlmService = {
+  sendMessageToLLM: jest.fn(),
+  generateFhirQuestionnaireResponse: jest.fn(),
+  markdownToFhirQuestionnaire: jest.fn(),
+  conductFullQuestionnaireInterview: jest.fn(),
+  generateConversationalTextForItem: jest.fn(),
+  addConversationalTextToItems: jest.fn(), // Assuming this might be called if not fully isolated
+  generateConversationalTextForItemsBatch: jest.fn(),
+};
+jest.mock('./llmService', () => mockLlmService);
 
 // Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  clear: jest.fn(),
-  removeItem: jest.fn(),
-};
+const localStorageMock = (() => {
+  let store: { [key: string]: string } = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
-
-// Mock file-saver's saveAs function
+// Mock file-saver
 jest.mock('file-saver', () => ({
   saveAs: jest.fn(),
 }));
 
-describe('App', () => {
+// Mock catalogUtils if needed for providing questionnaire
+jest.mock('./catalogUtils', () => ({
+  loadCatalog: jest.fn(() => []), // Default to empty catalog
+  saveQuestionnaireToCatalog: jest.fn(),
+  deleteFromCatalog: jest.fn(),
+  updateQuestionnaireTitle: jest.fn(),
+}));
+
+
+const mockQuestionnaire = {
+  id: 'test-q',
+  resourceType: 'Questionnaire',
+  title: 'Test Questionnaire',
+  item: [
+    { linkId: 'q1', text: 'Question 1 Text', type: 'string' },
+    { linkId: 'q2', text: 'Question 2 Text', type: 'choice', answerOption: [{valueCoding: {code: 'a1', display: 'Answer 1'}}, {valueCoding: {code: 'a2', display: 'Answer 2'}}]},
+    { linkId: 'q3', text: 'Question 3 Text', type: 'boolean' },
+  ],
+};
+
+
+describe('App.tsx - LLM Full Interview Mode', () => {
   beforeEach(() => {
-    // Clear mocks before each test
-    mockScrollIntoView.mockClear();
-    localStorageMock.getItem.mockClear();
-    localStorageMock.setItem.mockClear();
-    localStorageMock.clear.mockClear();
-    localStorageMock.removeItem.mockClear();
-    const llmService = require('./llmService');
-    llmService.sendMessageToLLM.mockClear();
-    llmService.generateFhirQuestionnaireResponse.mockClear();
-    const fileSaver = require('file-saver');
-    fileSaver.saveAs.mockClear();
-
-    // Reset localStorage mock data for each test if needed
-    localStorageMock.getItem.mockReturnValue(null); // Default to empty localStorage
+    jest.clearAllMocks(); // Clears all mock usage data
+    localStorageMock.clear(); // Clear localStorage for each test
   });
 
-  afterAll(() => {
-    // Restore original scrollIntoView and useEffect
-    Element.prototype.scrollIntoView = originalScrollIntoView;
-    // (React.useEffect as jest.Mock).mockRestore(); // Restore useEffect mock
-  });
-
-  test('renders the initial welcome message and input', async () => {
+  const renderChatPageWithMode = async (questionnaire: any, mode: 'llm-full-interview' | 'step') => {
+    // @ts-ignore
+    const setQuestionnaire = jest.fn(); // Mock setter for context
+    
     await act(async () => {
-      render(<App />);
+        render(
+        <QuestionnaireContext.Provider value={{ questionnaire, setQuestionnaire }}>
+          <MemoryRouter initialEntries={[{ pathname: '/chat', state: { interviewMode: mode } }]}>
+            <Routes>
+              <Route path="/chat" element={<App />} /> {/* Assuming ChatPage is rendered by App at /chat */}
+            </Routes>
+          </MemoryRouter>
+        </QuestionnaireContext.Provider>
+      );
     });
-    expect(screen.getByText('Welcome! I will help you complete your medical intake. How are you feeling today?')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'send' })).toBeInTheDocument();
-    expect(screen.getByTitle('End Chat and Save Log')).toBeInTheDocument();
-    expect(screen.getByText('Browse Chat Logs')).toBeInTheDocument();
+    return { setQuestionnaire };
+  };
+
+  test('initial load in LLM Full Interview mode displays first question from LLM', async () => {
+    const initialLLMResponse = {
+      action: 'ask',
+      linkId_asked: 'q1',
+      text_response: 'LLM First Question: Question 1 Text?',
+      requires_answer_options: false,
+    };
+    mockLlmService.conductFullQuestionnaireInterview.mockResolvedValueOnce(initialLLMResponse);
+
+    await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
+    
+    // Verify initial welcome message from App.tsx and then the first LLM question
+    await waitFor(() => {
+      expect(screen.getByText("Welcome! I'll conduct this intake interview conversationally. Let's get started.")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('LLM First Question: Question 1 Text?')).toBeInTheDocument();
+    });
+
+    // Verify conductFullQuestionnaireInterview was called correctly for initialization
+    expect(mockLlmService.conductFullQuestionnaireInterview).toHaveBeenCalledTimes(1);
+    expect(mockLlmService.conductFullQuestionnaireInterview).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ linkId: 'q1', text: 'Question 1 Text' }),
+        expect.objectContaining({ linkId: 'q2', text: 'Question 2 Text' }),
+        expect.objectContaining({ linkId: 'q3', text: 'Question 3 Text' }),
+      ]), // unansweredQuestions
+      [], // answeredQuestions
+      expect.stringContaining("Welcome! I'll conduct this intake interview conversationally.") // chatHistory
+    );
+    // Further check on currentLlmQuestionLinkId would require exposing state or testing behavior dependent on it.
   });
 
-  test('calls scrollIntoView on initial render and when messages update', async () => {
+  test('handleLlmFullInterview processes "ask" action correctly', async () => {
+    const initialLLMResponse = { action: 'ask', linkId_asked: 'q1', text_response: 'LLM Q1?' };
+    const secondLLMResponse = { action: 'ask', linkId_asked: 'q2', text_response: 'LLM Q2?' };
+    mockLlmService.conductFullQuestionnaireInterview
+      .mockResolvedValueOnce(initialLLMResponse) // For startLlmInterview
+      .mockResolvedValueOnce(secondLLMResponse);  // For the first handleLlmFullInterview call
+
+    await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
+    
+    await waitFor(() => expect(screen.getByText('LLM Q1?')).toBeInTheDocument());
+
+    const inputElement = screen.getByPlaceholderText('Type your answer...');
+    const sendButton = screen.getByRole('button', { name: /send/i });
+
     await act(async () => {
-      render(<App />);
+      fireEvent.change(inputElement, { target: { value: 'User Answer to Q1' } });
+      fireEvent.click(sendButton);
     });
 
-    // scrollIntoView should be called on initial render
-    expect(mockScrollIntoView).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByText('User Answer to Q1')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('LLM Q2?')).toBeInTheDocument());
+    
+    expect(mockLlmService.conductFullQuestionnaireInterview).toHaveBeenCalledTimes(2);
+    // Check arguments of the second call (the one from handleLlmFullInterview)
+    const secondCallArgs = mockLlmService.conductFullQuestionnaireInterview.mock.calls[1];
+    expect(secondCallArgs[0]).toEqual(expect.arrayContaining([ // unanswered
+      expect.objectContaining({ linkId: 'q2' }),
+      expect.objectContaining({ linkId: 'q3' }),
+    ]));
+    expect(secondCallArgs[0].length).toBe(2); // q2 and q3 are unanswered
+    expect(secondCallArgs[1]).toEqual([ // answered
+      { linkId: 'q1', questionText: 'Question 1 Text', answer: 'User Answer to Q1' }
+    ]);
+    // currentLlmQuestionLinkId should now be 'q2' (verified by next interaction or state exposure)
+  });
 
-    // Simulate sending a message to trigger a messages update and another scrollIntoView call
-    const inputElement = screen.getByPlaceholderText('Type your message...');
-    const sendButton = screen.getByRole('button', { name: 'send' });
+  test('handleLlmFullInterview processes "complete" action and triggers log saving', async () => {
+    const initialLLMResponse = { action: 'ask', linkId_asked: 'q1', text_response: 'LLM Q1?' };
+    const finalLLMResponse = { action: 'complete', text_response: 'Interview complete! Thanks.' };
+    mockLlmService.conductFullQuestionnaireInterview
+      .mockResolvedValueOnce(initialLLMResponse)
+      .mockResolvedValueOnce(finalLLMResponse);
+    // Mock generateFhirQuestionnaireResponse for the log saving part
+    mockLlmService.generateFhirQuestionnaireResponse.mockResolvedValueOnce({ resourceType: 'QuestionnaireResponse', item: [] });
 
-    // Use fireEvent for user interactions
-    fireEvent.change(inputElement, { target: { value: 'Hello' } });
-    fireEvent.click(sendButton);
 
-    // Wait for the async message handling and state update
-    await waitFor(() => expect(mockScrollIntoView).toHaveBeenCalledTimes(2));
+    await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
+    await waitFor(() => expect(screen.getByText('LLM Q1?')).toBeInTheDocument());
+
+    const inputElement = screen.getByPlaceholderText('Type your answer...');
+    const sendButton = screen.getByRole('button', { name: /send/i });
+
+    await act(async () => {
+      fireEvent.change(inputElement, { target: { value: 'User Final Answer' } });
+      fireEvent.click(sendButton);
+    });
+    
+    await waitFor(() => expect(screen.getByText('User Final Answer')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Interview complete! Thanks.')).toBeInTheDocument());
+    
+    // Verify interview completion UI if any (e.g., input disabled)
+    expect(inputElement).toBeDisabled();
+    expect(sendButton).toBeDisabled();
+
+    // Check if log saving was triggered
+    await waitFor(() => {
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'chatLogs',
+        expect.stringContaining('Interview complete! Thanks.') // Check if transcript was part of the saved log
+      );
+    });
+    expect(mockLlmService.generateFhirQuestionnaireResponse).toHaveBeenCalled();
+  });
+  
+  test('handleLlmFullInterview processes "error" action from LLM', async () => {
+    const initialLLMResponse = { action: 'ask', linkId_asked: 'q1', text_response: 'LLM Q1?' };
+    const errorLLMResponse = { action: 'error', text_response: 'Sorry, an LLM error occurred.' };
+    mockLlmService.conductFullQuestionnaireInterview
+      .mockResolvedValueOnce(initialLLMResponse)
+      .mockResolvedValueOnce(errorLLMResponse);
+
+    await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
+    await waitFor(() => expect(screen.getByText('LLM Q1?')).toBeInTheDocument());
+
+    const inputElement = screen.getByPlaceholderText('Type your answer...');
+    const sendButton = screen.getByRole('button', { name: /send/i });
+
+    await act(async () => {
+      fireEvent.change(inputElement, { target: { value: 'User input causing error' } });
+      fireEvent.click(sendButton);
+    });
+
+    await waitFor(() => expect(screen.getByText('User input causing error')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Sorry, an LLM error occurred.')).toBeInTheDocument());
+    // Input should still be enabled for user to try again or for app to offer other options
+    expect(inputElement).not.toBeDisabled(); 
   });
 });
