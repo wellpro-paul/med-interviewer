@@ -1,4 +1,4 @@
-// LLM prompts are now loaded from src/prompts/*.txt. See plan.md for future UI editing.
+// LLM prompts are now loaded from intake-interviewer-ui/public/prompts/*.txt. See plan.md for future UI editing.
 // TODO: In the future, allow editing of prompt files from the UI.
 
 // LLM service for OpenAI (can be extended for Gemini)
@@ -80,7 +80,7 @@ async function callGemini(messages: LLMMessage[]): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No response from Gemini.';
 }
 
-// Helper to load a prompt file from src/prompts/
+// Helper to load a prompt file from intake-interviewer-ui/public/prompts/
 async function loadPrompt(name: string): Promise<string> {
   const res = await fetch(`/prompts/${name}.txt`);
   if (!res.ok) throw new Error(`Failed to load prompt: ${name}`);
