@@ -378,6 +378,7 @@ function flattenQuestions(items: any[], parentSection: string | null = null) {
 
 // Helper to make questions conversational
 function makeConversational(text: string): string {
+  if (!text) return ''; // Handle null or undefined text
   const trimmed = text.trim();
   if (/[.?!]$/.test(trimmed)) return trimmed;
   if (/^(Have you|In the past|Over the past|During the last|Are you|Do you|Did you|Has your|Is your|Was your)/i.test(trimmed))
@@ -447,6 +448,13 @@ function ChatPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [endEarlyDialogOpen, setEndEarlyDialogOpen] = useState(false);
 
+  // State for LLM Full Interview mode
+  const [flatQuestions, setFlatQuestions] = useState<Array<any>>([]); // Holds all questions, flattened.
+  const [answeredLlmQuestions, setAnsweredLlmQuestions] = useState<Record<string, { linkId: string, questionText: string, answer: string }>>({});
+  const [currentLlmQuestionLinkId, setCurrentLlmQuestionLinkId] = useState<string | null>(null); // linkId of the question LLM just asked.
+  const [isLlmInterviewActive, setIsLlmInterviewActive] = useState(false); // True if LLM full interview is running.
+  const [isLlmLoading, setIsLlmLoading] = useState(false); // True when waiting for LLM response.
+
   // Expanded denial phrases
   const denialPhrases = [
     'no', 'nope', 'not today', 'not really', 'none', 'never', 'not at all', 'nah', 'negative', 'zero', 'none at all'
@@ -454,59 +462,105 @@ function ChatPage() {
 
   // Flatten questionnaire to a list of questions
   const questions = React.useMemo(
-    () => (questionnaire ? flattenQuestions(questionnaire.item) : []),
+    () => (questionnaire && questionnaire.item ? flattenQuestions(questionnaire.item) : []),
     [questionnaire]
   );
-  const currentQ = questions[currentIdx];
+  const currentQ = questions[currentIdx]; // For step-by-step mode
 
-  // Helper to get answer options for currentQ
+  // Helper to get answer options for currentQ (for step-by-step mode)
   const currentAnswerOptions = currentQ ? getAnswerOptions(currentQ.item) : undefined;
 
-  // On mount or questionnaire change, reset state
+
+  // Function to start the LLM interview (called on load for llm-full-interview mode)
+  const startLlmInterview = async (initialFlatQuestions: any[]) => {
+    if (!questionnaire) return; // Should not happen if called correctly
+    setIsLlmLoading(true);
+    setMessages([{ sender: 'bot', text: "Welcome! I'll conduct this intake interview conversationally. Let's get started." }]);
+    
+    const initialUnanswered = initialFlatQuestions.map(q => ({
+      linkId: q.linkId,
+      text: q.text,
+      type: q.type,
+      answerOptions: q.answerOptions || [] // Ensure answerOptions is an array
+    }));
+
+    try {
+      const responseJson = await conductFullQuestionnaireInterview(
+        initialUnanswered,
+        [], // No answered questions yet
+        "Interviewer: Welcome! I'll conduct this intake interview conversationally. Let's get started." // Initial chat history
+      );
+      
+      if (responseJson && responseJson.text_response) {
+        setMessages(prev => [...prev, { sender: 'bot', text: responseJson.text_response }]);
+        setCurrentLlmQuestionLinkId(responseJson.linkId_asked || null);
+      } else {
+        // Handle cases where LLM might not return the expected structure, e.g. error action from LLM
+        const errorMessage = responseJson?.text_response || "Sorry, I couldn't start the interview. Please try reloading.";
+        setMessages(prev => [...prev, { sender: 'bot', text: errorMessage }]);
+        if (responseJson?.action === 'error') {
+          setIsLlmInterviewActive(false); // Stop interview if LLM signals critical error at start
+        }
+      }
+    } catch (error) {
+      console.error("Error starting LLM interview:", error);
+      setMessages(prev => [...prev, { sender: 'bot', text: "There was an error starting the interview. Please try again later." }]);
+      setIsLlmInterviewActive(false); // Stop interview on critical error
+    } finally {
+      setIsLlmLoading(false);
+    }
+  };
+
+  // Combined useEffect for questionnaire loading and interview mode initialization
   React.useEffect(() => {
-    setCurrentIdx(0);
-    setAnswerScores({});
+    // Common reset logic
     setMessages([]);
     setCompleted(false);
     setLogSaved(false);
     setSavingFhir(false);
     setFhirError(null);
     setInput('');
-    // Set phase based on first question
-    if (questionnaire && questions.length > 0) {
-      const firstQ = questions[0];
-      const opts = getAnswerOptions(firstQ.item);
-      if (firstQ.item.type === 'choice' && opts && opts.length > 0) {
-        setPhase('awaiting_score');
-      } else {
-        setPhase('awaiting_free_text');
+    setIsLlmInterviewActive(false); // Default to false
+    setAnsweredLlmQuestions({});
+    setCurrentLlmQuestionLinkId(null);
+    setFlatQuestions([]); // Clear flat questions initially
+
+    if (questionnaire && questionnaire.item) {
+      const flattened = flattenQuestions(questionnaire.item);
+      setFlatQuestions(flattened); // Set flat questions for both modes
+
+      if (interviewMode === 'llm-full-interview') {
+        setIsLlmInterviewActive(true);
+        // Initial call to start the LLM interview
+        startLlmInterview(flattened); 
+      } else { // Step-by-step mode
+        setIsLlmInterviewActive(false);
+        setCurrentIdx(0); // Reset index for step-by-step
+        setAnswerScores({}); // Reset scores for step-by-step
+        if (flattened.length > 0) {
+          const firstQ = flattened[0]; // Use flattened item directly
+          const opts = getAnswerOptions(firstQ); 
+          setPhase(opts && opts.length > 0 ? 'awaiting_score' : 'awaiting_free_text');
+          
+          // Initial messages for step-by-step
+          const questionText = firstQ.conversationalText || makeConversational(firstQ.text);
+          setMessages([
+            { sender: 'bot', text: "Welcome! I'll help you complete your intake. Let's get started." },
+            { sender: 'bot', text: questionText }
+          ]);
+        } else {
+          setPhase('awaiting_free_text'); // No questions in step-by-step
+        }
       }
     } else {
-      setPhase('awaiting_free_text');
+      // No questionnaire or no items
+      setPhase('awaiting_free_text'); 
+      setFlatQuestions([]); // Ensure flatQuestions is empty if no questionnaire
     }
-  }, [questionnaire, questions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionnaire, interviewMode]); // Dependencies for this effect
 
-  // Show welcome message and first question
-  React.useEffect(() => {
-    if (!questionnaire) return;
-    if (completed) return;
-    if (messages.length === 0 && currentQ) {
-      const questionText = currentQ.item.conversationalText || makeConversational(currentQ.item.text);
-      setMessages([
-        { sender: 'bot', text: "Welcome! I'll help you complete your intake. Let's get started." },
-        { sender: 'bot', text: questionText }
-      ]);
-      // Set phase based on question type
-      const opts = getAnswerOptions(currentQ.item);
-      if (currentQ.item.type === 'choice' && opts && opts.length > 0) {
-        setPhase('awaiting_score');
-      } else {
-        setPhase('awaiting_free_text');
-      }
-    }
-  }, [questionnaire, completed, currentQ, messages.length]);
-
-  // Save log when completed
+  // Save log when completed (works for both modes if 'completed' is set correctly)
   React.useEffect(() => {
     if (completed && !logSaved) {
       const day = getToday();
@@ -532,25 +586,116 @@ function ChatPage() {
   const grandTotal = Object.values(answerScores).reduce((a, b) => a + b, 0);
 
   // New: Handler for LLM Full Interview mode
-  const handleLlmFullInterview = async (userInput: string) => {
-    // Build chat history as transcript
-    const chatHistory = messages
+  const handleLlmFullInterview = async (userInputText: string) => {
+    if (!userInputText.trim() || !isLlmInterviewActive) return;
+
+    setIsLlmLoading(true);
+    const userMessage = { sender: 'user' as 'user', text: userInputText.trim() };
+    // Add user message to chat
+    setMessages(prev => [...prev, userMessage]); 
+    setInput(''); // Clear input field immediately
+
+    let tempAnsweredLlmQuestions = { ...answeredLlmQuestions };
+
+    // Optimistically record the user's input as the answer to the currentLlmQuestionLinkId
+    if (currentLlmQuestionLinkId) {
+      const questionBeingAnswered = flatQuestions.find(q => q.linkId === currentLlmQuestionLinkId);
+      if (questionBeingAnswered) {
+        tempAnsweredLlmQuestions[currentLlmQuestionLinkId] = {
+          linkId: currentLlmQuestionLinkId,
+          questionText: questionBeingAnswered.text, // Store the original question text
+          answer: userInputText.trim()
+        };
+        setAnsweredLlmQuestions(tempAnsweredLlmQuestions); // Update state
+      }
+    }
+    
+    // Prepare data for the LLM
+    const unanswered = flatQuestions
+      .filter(q => !tempAnsweredLlmQuestions[q.linkId]) // Filter out questions that are now answered
+      .map(q => ({ 
+        linkId: q.linkId, 
+        text: q.text, 
+        type: q.type, 
+        answerOptions: q.answerOptions || [] 
+      }));
+      
+    const answered = Object.values(tempAnsweredLlmQuestions);
+
+    // Create chat history from the last N messages including the current user message
+    const currentChatHistory = messages.concat([userMessage]) 
+      .slice(-10) // Take up to the last 10 messages for context
       .map(m => `${m.sender === 'bot' ? 'Interviewer' : 'Patient'}: ${m.text}`)
-      .concat([`Patient: ${userInput}`])
       .join('\n');
-    const reply = await conductFullQuestionnaireInterview(questionnaire, chatHistory);
-    setMessages(msgs => [...msgs, { sender: 'user', text: userInput }, { sender: 'bot', text: reply }]);
-    setInput('');
-    inputRef.current?.focus();
+
+    try {
+      const responseJson = await conductFullQuestionnaireInterview(unanswered, answered, currentChatHistory);
+
+      if (responseJson && responseJson.text_response) {
+        setMessages(prev => [...prev, { sender: 'bot', text: responseJson.text_response }]);
+        setCurrentLlmQuestionLinkId(responseJson.linkId_asked || null);
+
+        // Handle actions from LLM
+        switch (responseJson.action) {
+          case 'ask':
+            // currentLlmQuestionLinkId is set by linkId_asked. Answer recording is optimistic.
+            // Future: UI could use responseJson.requires_answer_options here.
+            break;
+          case 'clarify':
+            // User needs to respond again. currentLlmQuestionLinkId might be the same or null.
+            break;
+          case 'summarize':
+            // No specific state change here beyond showing the summary.
+            // LLM might ask for confirmation or proceed.
+            break;
+          case 'complete':
+            setIsLlmInterviewActive(false);
+            setCompleted(true); // This will trigger the save log useEffect
+            // Optional: Add a final completion message if not already part of responseJson.text_response
+            // setMessages(prev => [...prev, {sender: 'bot', text: "Thank you for completing the interview!"}]);
+            break;
+          case 'error':
+            console.error("LLM returned an error action:", responseJson.text_response);
+            // Optionally, display a more user-friendly message or halt the interview
+            // setMessages(prev => [...prev, { sender: 'bot', text: "An error occurred with the interview flow." }]);
+            // setIsLlmInterviewActive(false); // Consider halting on error
+            break;
+          default:
+            console.warn("LLM returned an unknown action:", responseJson.action);
+        }
+      } else {
+        // Handle cases where LLM response is not as expected (e.g. missing text_response)
+        setMessages(prev => [...prev, { sender: 'bot', text: "Sorry, I didn't get a valid response. Please try again." }]);
+      }
+    } catch (error) {
+      console.error("Error in handleLlmFullInterview calling conductFullQuestionnaireInterview:", error);
+      setMessages(prev => [...prev, { sender: 'bot', text: "Sorry, there was an error processing your response. Please try again." }]);
+      // Potentially halt the interview or offer a retry mechanism
+      // setIsLlmInterviewActive(false); 
+    } finally {
+      setIsLlmLoading(false);
+      inputRef.current?.focus(); // Focus input for next user entry
+    }
   };
 
-  // Handle patient free-text input submit
+  // Handle patient free-text input submit (for step-by-step mode)
   const handleTextSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    // This function should only be called in step-by-step mode.
+    if (isLlmInterviewActive) {
+      // Safeguard: if somehow called during LLM interview, redirect.
+      // The main onSubmit handler should prevent this.
+      console.warn("handleTextSubmit called during active LLM interview. Redirecting to handleLlmFullInterview.");
+      handleLlmFullInterview(input.trim()); // Pass the current input directly
+      return;
+    }
+
     const userInput = input.trim();
     if (!userInput || !currentQ || phase !== 'awaiting_free_text') return;
+    
+    // Add user message to chat for step-by-step
     setMessages(msgs => [...msgs, { sender: 'user', text: userInput }]);
-    setInput('');
+    setInput(''); // Clear input
     inputRef.current?.focus();
 
     const type = currentQ.item.type;
@@ -720,17 +865,27 @@ function ChatPage() {
             </Box>
           ))}
         </Box>
-        {/* Replace the input handler based on mode */}
-        {phase === 'awaiting_free_text' && !completed && (
+        {/* Input form: Main interaction point */}
+        {/* Show input form if the interview is not completed.
+            The behavior of the form submission is conditional on isLlmInterviewActive.
+            The phase 'awaiting_free_text' is primarily for step-by-step mode's turn-based input.
+            For LLM full interview, it's always "free text" from the user's perspective.
+        */}
+        {!completed && (
           <form
             onSubmit={e => {
               e.preventDefault();
-              if (!input.trim()) return;
-              if (interviewMode === 'llm-full') {
-                handleLlmFullInterview(input.trim());
+              const trimmedInput = input.trim();
+              if (!trimmedInput) return;
+
+              if (isLlmInterviewActive) {
+                handleLlmFullInterview(trimmedInput);
               } else {
-                setMessages(msgs => [...msgs, { sender: 'user', text: input.trim() }]);
-                handleTextSubmit(e);
+                // Step-by-step mode: only submit if in 'awaiting_free_text' phase.
+                // Other phases (e.g., 'awaiting_score') are handled by button clicks.
+                if (phase === 'awaiting_free_text') {
+                  handleTextSubmit(e); 
+                }
               }
             }}
             style={{ display: 'flex', gap: 8, marginBottom: 16 }}
@@ -742,15 +897,26 @@ function ChatPage() {
               placeholder="Type your answer..."
               fullWidth
               autoFocus
-              disabled={completed}
+              // Disable input if interview is completed OR if LLM is currently processing a response
+              // Also disable if in step-by-step and not awaiting free text (e.g. awaiting score selection)
+              disabled={completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
             />
-            <IconButton type="submit" color="primary" disabled={!input.trim() || completed} aria-label="send">
+            <IconButton 
+              type="submit" 
+              color="primary" 
+              // Disable button if input is empty, interview completed, LLM is loading,
+              // or in step-by-step and not awaiting free text.
+              disabled={!input.trim() || completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
+              aria-label="send"
+            >
               <SendIcon />
             </IconButton>
           </form>
         )}
-        {/* Only show score input if answerOptions are present and non-empty */}
-        {phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > 0 && currentAnswerOptions.length <= CHIPS_THRESHOLD && (
+
+        {/* UI Elements specific to STEP-BY-STEP mode */}
+        {/* These are hidden if isLlmInterviewActive is true. */}
+        {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > 0 && currentAnswerOptions.length <= CHIPS_THRESHOLD && (
           <>
             {/* Friendly prompt for ambiguous answers */}
             <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
@@ -764,7 +930,7 @@ function ChatPage() {
             />
           </>
         )}
-        {phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > CHIPS_THRESHOLD && (
+        {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > CHIPS_THRESHOLD && ( 
           <>
             {/* Friendly prompt for ambiguous answers */}
             <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
@@ -1125,10 +1291,10 @@ function CatalogPage() {
                       color="primary"
                     />
                   }
-                  label={interviewModes[q.id] === 'llm-full' ? 'LLM Full Interview' : 'Step-by-Step'}
+                  label={interviewModes[q.id] === 'llm-full-interview' ? 'LLM Full Interview' : 'Step-by-Step'}
                   sx={{ mr: 2 }}
                 />
-                <Button size="small" onClick={() => handleStartChart(q)}>Start Chat</Button>
+                <Button size="small" onClick={() => handleStartChart(q)}>Start Chat</Button> 
                 <Button size="small" onClick={() => handleView(q)}>View</Button>
                 <Button size="small" onClick={() => handleRename(q.id, q.title)}>Rename</Button>
                 <Button size="small" color="error" onClick={() => handleDelete(q.id)}>Delete</Button>

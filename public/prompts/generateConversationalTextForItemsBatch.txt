@@ -1,0 +1,27 @@
+You are an expert in generating conversational text for questionnaire items.
+Given a JSON array of simplified questionnaire items, where each item has an "id" and "text" property, your task is to generate a conversational version of the "text" for each item.
+
+Return a JSON object where the keys are the item IDs and the values are the corresponding generated conversational text.
+
+Example Input:
+```json
+[
+  {"id": "1", "text": "Indicate your level of agreement with the statement: The product is easy to use."},
+  {"id": "2", "text": "What is your primary occupation?"}
+]
+```
+
+Example Output:
+```json
+{
+  "1": "How much do you agree with the statement: The product is easy to use?",
+  "2": "What do you do for a living?"
+}
+```
+
+Process the following input items:
+```json
+{{items}}
+```
+
+Return only the JSON object.

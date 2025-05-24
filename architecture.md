@@ -62,7 +62,7 @@
 4. The loaded questionnaire is stored in app state
 5. User navigates to the Catalog page, selects a questionnaire, and starts a chat interview
 6. The Chat Interview page uses the loaded questionnaire to drive the chat and scoring UI
-7. After the interview, responses and chat logs (Markdown and FHIR JSON) are stored locally, automatically at completion
+7. After the interview, responses and chat logs (Markdown and FHIR JSON) are stored locally, automatically at completion. For "LLM Full Interview" mode, the LLM signals completion via the structured JSON response (`"action": "complete"`).
 8. User can view/download/delete logs on the Logs page
 
 ## Extensibility
@@ -80,9 +80,30 @@
   - The LLM analyzes the response and determines whether to prompt for a score, clarify, skip, or move on.
   - Score input (chips or typed) is only shown if the LLM says a score is needed.
   - Skipping and validation for special question types (email, date) are supported.
-  - The LLM prompt includes the full chat history, current question, and answer, and is engineered to follow the new rules (score only if relevant, skip allowed, validation for special types).
+  - The LLM prompt (`public/prompts/fullQuestionnaireInterview.txt`) has been significantly updated to manage this structured interaction.
+    - **Input Context Sent to LLM:**
+        - `unanswered_questions`: A JSON array of simplified question objects (with `linkId`, `text`, `type`, and `answerOptions`) that still need to be asked.
+        - `answered_questions`: A JSON array of questions already answered by the user, including their `linkId`, original `text`, and the user's `answer`.
+        - `chat_history`: A string transcript of the most recent conversational turns to provide immediate context.
+    - **Structured JSON Output from LLM:** The LLM is now instructed to return its response as a single JSON object, specifying the next action and necessary data. The format is:
+      ```json
+      {
+        "action": "ask" | "clarify" | "summarize" | "complete" | "error",
+        "linkId_asked": "string (linkId of the question being asked, if action is 'ask')",
+        "text_response": "string (The text to display to the user for any action)",
+        "linkId_clarify": "string (optional, linkId of question needing clarification)",
+        "requires_answer_options": "boolean (optional, true if the asked question has predefined options)"
+      }
+      ```
+    - **Actions Handled by `ChatPage.tsx`:**
+        - `"ask"`: Displays `text_response` as the next question and updates `currentLlmQuestionLinkId` with `linkId_asked`.
+        - `"clarify"`: Displays `text_response` as a clarifying question. `linkId_clarify` indicates which previous question this refers to.
+        - `"summarize"`: Displays `text_response` as a summary.
+        - `"complete"`: Indicates the interview is finished. `ChatPage.tsx` sets `completed = true`, triggering log saving.
+        - `"error"`: Displays `text_response` as an error message from the LLM.
+  - This structured communication allows `ChatPage.tsx` to manage the interview state and flow more robustly, relying on the LLM's decisions for question sequencing, clarification, and completion.
   - Both FHIR and Markdown questionnaires are supported, with freeform and validated questions handled appropriately.
-  - Section and grand total summaries are still calculated and shown.
+  - Section and grand total summaries are still calculated and shown (though summarization points are now LLM-driven).
   - Voice input/output remains scaffolded for future integration.
 
 ## Numeric Scale and Answer Handling (2024-06)
@@ -103,7 +124,9 @@
 - (Future) FHIR JSON editing may be added for power users.
 
 ## Conversational Phrasing Enrichment (2024-06)
-- On import, all questionnaire items are recursively run through Gemini to generate a conversational phrasing, stored as `item.conversationalText`.
+- On import, conversational phrasing for all applicable questionnaire items is generated using a **batch process** with the LLM (Gemini). This significantly improves import performance by reducing the number of individual LLM calls.
+- This process utilizes the `public/prompts/generateConversationalTextForItemsBatch.txt` prompt, which instructs the LLM to process an array of items and return a map of item IDs to their conversational text.
+- The generated phrasings are stored as `item.conversationalText` in the FHIR Questionnaire.
 - The enriched FHIR JSON is used throughout the app (catalog, chat, logs, etc.).
 - The chat UI always uses `item.conversationalText` if present, falling back to a cleaned-up version of the original text if not.
 - This ensures robust, patient-friendly questions regardless of the original questionnaire authoring quality.
