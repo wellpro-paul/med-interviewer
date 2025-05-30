@@ -1,5 +1,5 @@
 import React, { useState, useRef, createContext, useContext } from 'react';
-import { Box, Container, Paper, Typography, TextField, IconButton, ListItem, ListItemText, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, List as MUIList, Button, Tabs, Tab, DialogActions, TextField as MUITextField, Snackbar, Alert, Switch, FormControlLabel } from '@mui/material';
+import { Box, Container, Paper, Typography, TextField, IconButton, ListItem, ListItemText, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, List as MUIList, Button, Tabs, Tab, DialogActions, TextField as MUITextField, Snackbar, Alert, Switch, FormControlLabel, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { sendMessageToLLM, LLMMessage, generateFhirQuestionnaireResponse, markdownToFhirQuestionnaire, conductFullQuestionnaireInterview } from './llmService';
 import { saveAs } from 'file-saver';
@@ -324,6 +324,14 @@ function ImportPage() {
           </Typography>
         )}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {loading && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+            <CircularProgress size={32} sx={{ mb: 1 }} />
+            <Typography variant="body2" color="text.secondary">
+              Converting to FHIR... This may take up to a minute for large or complex files.
+            </Typography>
+          </Box>
+        )}
         <TextField
           label="Questionnaire Input / Output"
           multiline
@@ -851,12 +859,13 @@ function ChatPage() {
     );
   }
 
+  // --- Layout Refactor: Sticky Input ---
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
+    <Container maxWidth="md" sx={{ py: 4, height: 'calc(100vh - 64px)' }}>
+      <Paper elevation={3} sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h5">Chat Interview</Typography>
         <Typography variant="body1" sx={{ mb: 2 }}>Questionnaire loaded: <b>{questionnaire?.title || 'Untitled'}</b></Typography>
-        <Box sx={{ minHeight: 300, mb: 2 }}>
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
           {messages.map((msg, idx) => (
             <Box key={idx} sx={{ textAlign: msg.sender === 'user' ? 'right' : 'left', my: 1 }}>
               <Paper sx={{ display: 'inline-block', px: 2, py: 1, bgcolor: msg.sender === 'user' ? 'primary.light' : 'grey.100', color: msg.sender === 'user' ? 'white' : 'black' }}>
@@ -865,104 +874,91 @@ function ChatPage() {
             </Box>
           ))}
         </Box>
-        {/* Input form: Main interaction point */}
-        {/* Show input form if the interview is not completed.
-            The behavior of the form submission is conditional on isLlmInterviewActive.
-            The phase 'awaiting_free_text' is primarily for step-by-step mode's turn-based input.
-            For LLM full interview, it's always "free text" from the user's perspective.
-        */}
-        {!completed && (
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              const trimmedInput = input.trim();
-              if (!trimmedInput) return;
-
-              if (isLlmInterviewActive) {
-                handleLlmFullInterview(trimmedInput);
-              } else {
-                // Step-by-step mode: only submit if in 'awaiting_free_text' phase.
-                // Other phases (e.g., 'awaiting_score') are handled by button clicks.
-                if (phase === 'awaiting_free_text') {
-                  handleTextSubmit(e); 
+        {/* Sticky input area at the bottom */}
+        <Box sx={{ position: 'sticky', bottom: 0, bgcolor: 'background.paper', pt: 1, zIndex: 2 }}>
+          {/* Input form: Main interaction point */}
+          {!completed && (
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                const trimmedInput = input.trim();
+                if (!trimmedInput) return;
+                if (isLlmInterviewActive) {
+                  handleLlmFullInterview(trimmedInput);
+                } else {
+                  if (phase === 'awaiting_free_text') {
+                    handleTextSubmit(e);
+                  }
                 }
-              }
-            }}
-            style={{ display: 'flex', gap: 8, marginBottom: 16 }}
-          >
-            <TextField
-              inputRef={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="Type your answer..."
-              fullWidth
-              autoFocus
-              // Disable input if interview is completed OR if LLM is currently processing a response
-              // Also disable if in step-by-step and not awaiting free text (e.g. awaiting score selection)
-              disabled={completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
-            />
-            <IconButton 
-              type="submit" 
-              color="primary" 
-              // Disable button if input is empty, interview completed, LLM is loading,
-              // or in step-by-step and not awaiting free text.
-              disabled={!input.trim() || completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
-              aria-label="send"
+              }}
+              style={{ display: 'flex', gap: 8, marginBottom: 8 }}
             >
-              <SendIcon />
-            </IconButton>
-          </form>
-        )}
-
-        {/* UI Elements specific to STEP-BY-STEP mode */}
-        {/* These are hidden if isLlmInterviewActive is true. */}
-        {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > 0 && currentAnswerOptions.length <= CHIPS_THRESHOLD && (
-          <>
-            {/* Friendly prompt for ambiguous answers */}
-            <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
-            <ScoreInput
-              disabled={false}
-              onSelect={handleScoreSelect}
-              answerOptions={currentAnswerOptions}
-              renderSkipButton={
-                <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
-              }
-            />
-          </>
-        )}
-        {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > CHIPS_THRESHOLD && ( 
-          <>
-            {/* Friendly prompt for ambiguous answers */}
-            <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
-            <ScoreInput
-              disabled={false}
-              onSelect={handleScoreSelect}
-              answerOptions={currentAnswerOptions}
-              renderSkipButton={
-                <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
-              }
-            />
-            <form onSubmit={handleTypedScore} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <TextField
+                inputRef={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder={currentAnswerOptions && currentAnswerOptions.length > 0 ? "Type your answer or select an option..." : "Type a score (0-4)..."}
+                placeholder="Type your answer..."
                 fullWidth
                 autoFocus
-                disabled={completed}
+                disabled={completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
               />
               <IconButton
                 type="submit"
                 color="primary"
-                disabled={completed || (currentAnswerOptions && currentAnswerOptions.length > 0 ? !input.trim() : !input.match(/^[0-4]$/))}
+                disabled={!input.trim() || completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
                 aria-label="send"
               >
                 <SendIcon />
               </IconButton>
             </form>
-          </>
-        )}
-        {/* End Chat Early Button (debug) */}
+          )}
+          {/* UI Elements specific to STEP-BY-STEP mode (score chips, etc.) */}
+          {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > 0 && currentAnswerOptions.length <= CHIPS_THRESHOLD && (
+            <>
+              <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
+              <ScoreInput
+                disabled={false}
+                onSelect={handleScoreSelect}
+                answerOptions={currentAnswerOptions}
+                renderSkipButton={
+                  <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
+                }
+              />
+            </>
+          )}
+          {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > CHIPS_THRESHOLD && (
+            <>
+              <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
+              <ScoreInput
+                disabled={false}
+                onSelect={handleScoreSelect}
+                answerOptions={currentAnswerOptions}
+                renderSkipButton={
+                  <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
+                }
+              />
+              <form onSubmit={handleTypedScore} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <TextField
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={currentAnswerOptions && currentAnswerOptions.length > 0 ? "Type your answer or select an option..." : "Type a score (0-4)..."}
+                  fullWidth
+                  autoFocus
+                  disabled={completed}
+                />
+                <IconButton
+                  type="submit"
+                  color="primary"
+                  disabled={completed || (currentAnswerOptions && currentAnswerOptions.length > 0 ? !input.trim() : !input.match(/^[0-4]$/))}
+                  aria-label="send"
+                >
+                  <SendIcon />
+                </IconButton>
+              </form>
+            </>
+          )}
+        </Box>
+        {/* End Chat Early Button (debug) and completion messages remain at the bottom */}
         {!completed && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
             <Button

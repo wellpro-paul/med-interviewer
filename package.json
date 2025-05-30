@@ -9,5 +9,17 @@
     "vite-plugin-md": "^0.21.5",
     "vite-plugin-raw": "^1.0.3",
     "vite-plugin-string": "^1.2.3"
+  },
+  "name": "intake-interviewer",
+  "version": "0.1.0",
+  "description": "a prototype exploration of natural language medical intake questions for patients",
+  "author": "Paul Edge",
+  "license": "All Rights Reserved Intelligent Wellness Solutions d/b/a Wellpro AI 2025",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "test": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   }
 }

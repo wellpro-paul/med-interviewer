@@ -21,6 +21,9 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - Domain-specific prompt/rules for medical best practices (e.g., only consider biological relatives for family history, clarify ambiguous answers, etc.)
 - Guided by questions from a source questionnaire (FHIR, Markdown, or PDF)
 - **Navigation tabs always match the current page, even after programmatic navigation.**
+- **Progress indicator (spinner and message) on Import page for long-running tasks (e.g., PDF to FHIR conversion).**
+- **The current question and answer input are always visible (sticky at the bottom) on the Chat page, while chat history is scrollable.**
+- **Custom favicon and app icons for all platforms; browser tab displays "Intake Interviewer."**
 
 - **LLM prompts are now loaded from editable text files in `public/prompts/`** (for conversion, FHIR export, conversational phrasing, and full interview flow). See below for details.
 
@@ -33,7 +36,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - **PDF Upload & Extraction:** Upload a PDF, extract text in-browser, and convert to FHIR JSON using the LLM workflow.
 - **FHIR JSON Upload:** Upload a FHIR Questionnaire JSON file directly.
 - **Import Page Workflow:** All controls (Upload PDF, Convert to FHIR, Upload FHIR JSON, Save to Catalog, Reset) are above a single scrollable text box. Button order matches the logical workflow. Only Save to Catalog is enabled for valid FHIR JSON.
-- **Chips Threshold:** The number of answer options for which only chips (and skip) are shown in the chat UI is now configurable via `.env` (`REACT_APP_CHIPS_THRESHOLD`, default 5).
+- **Chips Threshold:** The number of answer options for which only chips (and skip) are shown in the chat UI is now configurable via .env REACT_APP_CHIPS_THRESHOLD, default 5.
 - **Catalog Summary Toggle:** In the Catalog viewer, toggle between raw JSON and a human-readable summary of questions and answer options.
 - **No 'Import for Chat':** Users start a chat from the Catalog page, not from Import.
 - **Chips-Only UI:** For questions with <= threshold options, only chips and skip are shown (no free text input).
@@ -44,9 +47,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 
 ## Configuration
 - You can set the chips threshold in your `.env` file:
-  ```
-  REACT_APP_CHIPS_THRESHOLD=5
-  ```
+  ```REACT_APP_CHIPS_THRESHOLD=5```
   This controls how many answer options are shown as chips only (with skip) before free text is also allowed.
 
 ## Updated Import, Catalog, and Chat Workflow (2024-06)
@@ -55,18 +56,20 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 +----------------+         +----------------+         +----------------+
 |   Import Page  |         |  Catalog Page  |         |   Chat Page    |
 | (Import,       |         | (List,         |         | (Interview,    |
-|  Convert,      |         |  Start Chat)  |         |  Select Q if   |
+|  Convert,      |         |  Start Chat)   |         |  Select Q if   |
 |  Save)         |         |                |         |  needed)       |
 +-------+--------+         +-------+--------+         +--------+-------+
         |                          |                           ^
-        |  (After Save)            |  (Start Chat)            |
+        |  (After Save)            |  (Start Chat)             |
         +------------------------->+-------------------------->+
 ```
 
 - The navigation order is: Home, Import, Catalog, Chat, Logs.
 - The Import Page is for adding new questionnaires (Markdown, FHIR JSON, or PDF), converting, and saving to the catalog. All controls are above the text box. No 'Import for Chat' button. The Import page does not load from the catalog.
+- **A progress indicator (spinner and message) is shown during long-running tasks (such as PDF to FHIR conversion) so users know the system is working.**
 - The Catalog Page lists all saved questionnaires and allows starting a new chat/interview for each entry ("Start Chat" button). Editing, renaming, deleting, and toggling between JSON and summary are available.
 - The Chat Page is used to conduct the interview. If accessed directly, the user can select a questionnaire from the catalog.
+- **The current question and input form are always visible at the bottom of the chat page, regardless of chat history length. Chat history is scrollable, allowing users to review previous questions and answers. (Planned: In a future release, users will be able to edit previous answers directly in the chat history, with downstream logic updating as needed.)**
 - The Logs Page allows you to view, download, or delete chat logs. You can also download all logs as a zip file, with filenames that include the date, time, and questionnaire title.
 
 ## LLM Prompt Customization
@@ -138,3 +141,28 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - The Import page is now at /import.
 - Unknown routes redirect to Home.
 - Uses Vite and vite-plugin-raw to import and render Markdown as the landing page.
+
+## Branding and PWA Support
+
+- The app uses a custom favicon and app icons for all major platforms (Apple, Android, desktop).
+- The browser tab displays the app name "Intake Interviewer."
+- The app is PWA-ready and can be installed on mobile devices for a native-like experience.
+
+## Planned Features / Roadmap
+
+- Edit previous answers in chat history, with logic to update downstream questions and scores.
+- UI for editing LLM prompts directly from the browser (admin-only).
+- Cloud/Medplum integration for persistent storage and interoperability.
+- Voice input/output for accessibility and convenience.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+[Specify your license here, e.g., MIT, Apache 2.0, etc.]
+
+## Contact
+
+For support or feature requests, please open an issue on GitHub or contact [your email/contact info].
