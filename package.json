@@ -5,10 +5,13 @@
     "react-markdown": "^10.1.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/jszip": "^3.4.0",
     "vite-plugin-md": "^0.21.5",
     "vite-plugin-raw": "^1.0.3",
-    "vite-plugin-string": "^1.2.3"
+    "vite-plugin-string": "^1.2.3",
+    "vitest": "^3.1.4"
   },
   "name": "intake-interviewer",
   "version": "0.1.0",
