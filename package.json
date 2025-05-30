@@ -9,5 +9,12 @@
     "vite-plugin-md": "^0.21.5",
     "vite-plugin-raw": "^1.0.3",
     "vite-plugin-string": "^1.2.3"
+  },
+  "scripts": {
+    "start": "cd intake-interviewer-ui && npm start",
+    "build": "cd intake-interviewer-ui && npm run build",
+    "test": "cd intake-interviewer-ui && npm test",
+    "lint": "cd intake-interviewer-ui && npm run lint",
+    "format": "cd intake-interviewer-ui && npm run format"
   }
 }

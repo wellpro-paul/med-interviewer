@@ -40,6 +40,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - **Download All Logs:** Download all chat logs as a zip file, with filenames including ISO date/time and questionnaire title for easy sorting.
 - **Prompt Customization:** LLM prompts for conversion, FHIR export, and conversational phrasing are now loaded from editable text files in `src/prompts/`.
 - **Debug: End Chat Early:** A small debug button lets you end a chat early and log the partial session for troubleshooting LLM issues.
+- **Root-level npm scripts:** You can now run `npm start`, `npm run build`, `npm test`, `npm run lint`, and `npm run format` from the project root. These commands will delegate to the UI app in `intake-interviewer-ui/` for convenience.
 
 ## Configuration
 - You can set the chips threshold in your `.env` file:
@@ -106,10 +107,8 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
    ```
 4. Start the app:
    ```
-   cd intake-interviewer-ui
    npm start
-   # or
-   yarn start
+   # (You can also use npm run build, npm test, npm run lint, npm run format from the root)
    ```
 
 ## Troubleshooting
