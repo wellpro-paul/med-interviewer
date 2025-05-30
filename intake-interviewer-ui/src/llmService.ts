@@ -295,52 +295,75 @@ export async function generateConversationalTextForItemsBatch(
   }
 }
 
-interface ItemWithTempId extends fhir4.QuestionnaireItem {
-  _tempId?: string; // Temporary id for batch processing
+// Local interface to define the expected shape of questionnaire items
+interface QuestionnaireItemLike {
+  linkId?: string;
+  text?: string;
+  type?: string; // e.g., 'group', 'choice', 'display'
+  item?: QuestionnaireItemLike[]; // For nested items
+  conversationalText?: string; // Property to be added/checked
+  answerOption?: any[]; // Keep if getAnswerOptions or similar logic is within this file and accesses it
+  // Add any other properties that are directly accessed by functions in this file
+}
+
+// ItemWithTempId extends the local QuestionnaireItemLike interface
+interface ItemWithTempId extends QuestionnaireItemLike {
+  _tempId: string; // Made non-optional as it's assigned before use in collection
 }
 
 // Helper function to recursively collect items needing conversational text
 function collectItemsForBatchProcessing(
-  items: ItemWithTempId[],
+  items: QuestionnaireItemLike[], // Use QuestionnaireItemLike
   collection: Array<{id: string; text: string}>,
   idPrefix: string = 'item'
 ): void {
   if (!Array.isArray(items)) return;
 
   items.forEach((item, index) => {
-    // Ensure each item has a unique temporary ID for this batch operation.
-    // We use _tempId to avoid conflicts if item.id or item.linkId is already used for other purposes.
-    item._tempId = item.linkId || `${idPrefix}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const currentItem = item as ItemWithTempId; // Cast to ItemWithTempId for internal use
+
+    // Assign _tempId. It's non-optional on ItemWithTempId.
+    currentItem._tempId = currentItem.linkId || `${idPrefix}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
     // Check if item has text and doesn't already have conversational text
     // Also, ensure it's not a display item, as they don't need conversational text.
-    if (item.text && !item.conversationalText && item.type !== 'display') {
-      collection.push({id: item._tempId, text: item.text});
+    if (currentItem.text && !currentItem.conversationalText && currentItem.type !== 'display') {
+      // currentItem._tempId is guaranteed to be a string here due to the assignment above.
+      collection.push({id: currentItem._tempId, text: currentItem.text});
     }
 
     // Recursively process sub-items
-    if (Array.isArray(item.item)) {
-      collectItemsForBatchProcessing(item.item as ItemWithTempId[], collection, item._tempId);
+    if (Array.isArray(currentItem.item)) {
+      // Pass sub-items as QuestionnaireItemLike[]
+      collectItemsForBatchProcessing(currentItem.item, collection, currentItem._tempId);
     }
   });
 }
 
 // Helper function to recursively apply conversational text from batch results
 function applyBatchResultsToItems(
-  items: ItemWithTempId[],
+  items: QuestionnaireItemLike[], // Use QuestionnaireItemLike
   batchResults: Record<string, string>
 ): void {
   if (!Array.isArray(items)) return;
 
   items.forEach(item => {
-    if (item._tempId && batchResults[item._tempId]) {
-      item.conversationalText = batchResults[item._tempId];
-    }
-    // Clean up temporary ID after processing
-    // delete item._tempId; // Keep for now for easier debugging if needed, can be removed later
+    const currentItem = item as ItemWithTempId; // Cast to ItemWithTempId
 
-    if (Array.isArray(item.item)) {
-      applyBatchResultsToItems(item.item as ItemWithTempId[], batchResults);
+    // _tempId should exist if it was processed by collectItemsForBatchProcessing
+    // and its presence in batchResults implies it was processed.
+    if (currentItem._tempId && batchResults[currentItem._tempId]) {
+      currentItem.conversationalText = batchResults[currentItem._tempId];
+    }
+    // Optional: Clean up temporary ID after processing if it's not part of QuestionnaireItemLike
+    // if (item.hasOwnProperty('_tempId') && !Object.prototype.hasOwnProperty.call(QuestionnaireItemLike.prototype, '_tempId')) {
+    // delete (item as any)._tempId;
+    // }
+
+
+    if (Array.isArray(currentItem.item)) {
+      // Pass sub-items as QuestionnaireItemLike[]
+      applyBatchResultsToItems(currentItem.item, batchResults);
     }
   });
 }
@@ -350,20 +373,22 @@ function applyBatchResultsToItems(
  * Mutates the items in place.
  * @param items The array of FHIR Questionnaire items (or any compatible structure with .text, .item fields)
  */
-export async function addConversationalTextToItems(items: any[]): Promise<void> {
+export async function addConversationalTextToItems(items: QuestionnaireItemLike[]): Promise<void> {
   if (!Array.isArray(items) || items.length === 0) return;
 
   const itemsToProcess: Array<{id: string; text: string}> = [];
-  // Cast to ItemWithTempId[] for internal processing that adds temporary '_tempId'
-  const itemsWithTempIds = items as ItemWithTempId[];
-
-  collectItemsForBatchProcessing(itemsWithTempIds, itemsToProcess);
+  // The 'items' array is already QuestionnaireItemLike[], which is compatible with ItemWithTempId structure
+  // after _tempId is assigned internally by collectItemsForBatchProcessing.
+  // No explicit top-level cast to ItemWithTempId[] is needed here for the collection part.
+  collectItemsForBatchProcessing(items, itemsToProcess);
 
   if (itemsToProcess.length > 0) {
     const batchResults = await generateConversationalTextForItemsBatch(itemsToProcess);
-    applyBatchResultsToItems(itemsWithTempIds, batchResults);
+    // Pass the original 'items' array, as _tempId properties are added to its elements
+    // by collectItemsForBatchProcessing and used by applyBatchResultsToItems.
+    applyBatchResultsToItems(items, batchResults);
   }
-  // The items array (itemsWithTempIds) has been mutated with conversationalText.
+  // The original 'items' array has been mutated with conversationalText.
   // No need to return it explicitly as the input array is modified directly.
 }
 

@@ -95,6 +95,8 @@ const QuestionnaireContext = createContext<QuestionnaireContextType>({
   questionnaire: null,
   setQuestionnaire: () => {},
 });
+// Make sure QuestionnaireContext is exported
+export { QuestionnaireContext };
 
 // Configurable threshold for showing only chips (answer options) in chat UI
 // Set REACT_APP_CHIPS_THRESHOLD in your .env file (default: 5)
@@ -114,16 +116,16 @@ function HomePage() {
         <ReactMarkdown
           children={markdown}
           components={{
-            h1: ({children, className}) => <Typography component="h1" variant="h4" gutterBottom className={className}>{children}</Typography>,
-            h2: ({children, className}) => <Typography component="h2" variant="h5" gutterBottom className={className}>{children}</Typography>,
-            h3: ({children, className}) => <Typography component="h3" variant="h6" gutterBottom className={className}>{children}</Typography>,
-            p: ({children, className}) => <Typography component="p" variant="body1" paragraph className={className}>{children}</Typography>,
-            li: ({children, className}) => <Typography component="li" variant="body2" className={className}>{children}</Typography>,
+            h1: ({children, className}: {children?: React.ReactNode, className?: string}) => <Typography component="h1" variant="h4" gutterBottom className={className}>{children}</Typography>,
+            h2: ({children, className}: {children?: React.ReactNode, className?: string}) => <Typography component="h2" variant="h5" gutterBottom className={className}>{children}</Typography>,
+            h3: ({children, className}: {children?: React.ReactNode, className?: string}) => <Typography component="h3" variant="h6" gutterBottom className={className}>{children}</Typography>,
+            p: ({children, className}: {children?: React.ReactNode, className?: string}) => <Typography component="p" variant="body1" paragraph className={className}>{children}</Typography>,
+            li: ({children, className}: {children?: React.ReactNode, className?: string}) => <Typography component="li" variant="body2" className={className}>{children}</Typography>,
             code: ({inline, children, className}: {inline?: boolean, children?: React.ReactNode, className?: string}) =>
               inline
                 ? <Box component="code" sx={{ bgcolor: '#f5f5f5', px: 0.5, borderRadius: 1, fontSize: 14, fontFamily: 'monospace' }} className={className}>{children}</Box>
                 : <Box component="pre" sx={{ bgcolor: '#f5f5f5', p: 1, borderRadius: 1, fontSize: 14, overflowX: 'auto', fontFamily: 'monospace' }} className={className}>{children}</Box>,
-            a: ({children, href, className}) => <a style={{ color: '#1976d2' }} href={href} className={className}>{children}</a>,
+            a: ({children, href, className}: {children?: React.ReactNode, href?: string, className?: string}) => <a style={{ color: '#1976d2' }} href={href} className={className}>{children}</a>,
           }}
         />
       </Paper>
@@ -360,20 +362,31 @@ function ImportPage() {
 }
 
 // --- Chat Interview Page (placeholder) ---
-function flattenQuestions(items: any[], parentSection: string | null = null) {
-  // Returns a flat array: { section, question, item }
-  let result: { section: string | null; item: any }[] = [];
-  for (const item of items) {
-    if (item.type === 'group' && item.item) {
-      // Section/group
-      for (const sub of flattenQuestions(item.item, item.text)) {
-        result.push({ section: item.text, item: sub.item });
+// Updated flattenQuestions to return items directly and handle all non-group items.
+function flattenQuestions(items: any[]): any[] {
+  let flat: any[] = [];
+  if (!Array.isArray(items)) return flat; 
+
+  items.forEach(item => {
+    if (!item) return; 
+
+    if (item.type === 'group') {
+      if (item.item) {
+        flat = flat.concat(flattenQuestions(item.item)); 
       }
-    } else if (item.type === 'choice') {
-      result.push({ section: parentSection, item });
+    } else {
+      // Add all other item types directly
+      const answerOptions = getAnswerOptions(item); 
+      flat.push({
+        linkId: item.linkId || `generated-${Math.random().toString(36).substring(2, 9)}`,
+        text: item.text || 'Unnamed Question',
+        type: item.type || 'string', 
+        answerOptions: answerOptions || [], 
+        ...item 
+      });
     }
-  }
-  return result;
+  });
+  return flat;
 }
 
 // Helper to make questions conversational
@@ -468,7 +481,8 @@ function ChatPage() {
   const currentQ = questions[currentIdx]; // For step-by-step mode
 
   // Helper to get answer options for currentQ (for step-by-step mode)
-  const currentAnswerOptions = currentQ ? getAnswerOptions(currentQ.item) : undefined;
+  // currentQ is now the item itself, so access properties directly
+  const currentAnswerOptions = currentQ ? getAnswerOptions(currentQ) : undefined;
 
 
   // Function to start the LLM interview (called on load for llm-full-interview mode)
@@ -698,19 +712,19 @@ function ChatPage() {
     setInput(''); // Clear input
     inputRef.current?.focus();
 
-    const type = currentQ.item.type;
+    const type = currentQ.type; // currentQ is the item itself
     // Only show structured options if answerOption is present and non-empty
     if (type === 'choice' && currentAnswerOptions && currentAnswerOptions.length > 0) {
       // Expanded denial detection
       const normalized = userInput.toLowerCase().replace(/[^a-z ]/g, '').trim();
       if (denialPhrases.includes(normalized)) {
-        setAnswerScores(ans => ({ ...ans, [currentQ.item.linkId]: 0 }));
+        setAnswerScores(ans => ({ ...ans, [currentQ.linkId]: 0 })); // currentQ is the item
         goToNextQuestion();
         return;
       }
       // If answer is a valid score (0-4)
       if (/^[0-4]$/.test(userInput)) {
-        setAnswerScores(ans => ({ ...ans, [currentQ.item.linkId]: Number(userInput) }));
+        setAnswerScores(ans => ({ ...ans, [currentQ.linkId]: Number(userInput) })); // currentQ is the item
         goToNextQuestion();
         return;
       }
@@ -737,8 +751,10 @@ function ChatPage() {
       .map(m => `${m.sender === 'bot' ? 'Interviewer' : 'Patient'}: ${m.text}`)
       .concat([`Patient: ${userInput}`])
       .join('\n');
-    const questionText = currentQ.item.text;
-    const sectionText = currentQ.section ? `Section: ${currentQ.section}` : '';
+    const questionText = currentQ.text; // currentQ is the item
+    const sectionText = ''; // currentQ no longer has 'section' directly, it's just the item. Section info is lost in this flattening.
+    // For step-by-step, section context might need to be handled differently if required.
+    // For now, this specific LLM call in step-by-step might be less context-aware about sections.
     let validationHint = '';
     if (type === 'date') validationHint = 'The answer must be a valid date (YYYY-MM-DD).';
     if (type === 'email') validationHint = 'The answer must be a valid email address.';
@@ -762,16 +778,20 @@ function ChatPage() {
   // Handle score selection (button or typed)
   const handleScoreSelect = (score: number | string | null) => {
     if (!currentQ) return;
-    setAnswerScores(prev => ({ ...prev, [currentQ.item.linkId]: score }));
-    // Extract and store score
+    // currentQ is the item itself
+    // The first setAnswerScores with just 'score' seems to be for displaying the selected code, 
+    // while the second one with 'scoreValue' is for the actual numeric score.
+    // This is a bit confusing, but let's maintain the logic while fixing accessors.
+    setAnswerScores(prev => ({ ...prev, [currentQ.linkId]: score })); // Use currentQ.linkId, score is the code/value selected
+
     let scoreValue = 0;
     if (score !== null) {
-      scoreValue = getAnswerScore(currentQ.item, score);
+      scoreValue = getAnswerScore(currentQ, score); // Pass currentQ (the item)
     }
-    setAnswerScores(prev => ({ ...prev, [currentQ.item.linkId]: scoreValue }));
-    // Show display text for answer option if available
+    setAnswerScores(prev => ({ ...prev, [currentQ.linkId]: scoreValue })); // Store actual numeric score
+
     let displayText = String(score);
-    const opts = getAnswerOptions(currentQ.item);
+    const opts = getAnswerOptions(currentQ); // Pass currentQ (the item)
     if (opts && score !== null) {
       const match = opts.find(opt => String(opt.code) === String(score));
       if (match) displayText = match.display;
@@ -813,14 +833,14 @@ function ChatPage() {
     if (nextIdx < questions.length) {
       setCurrentIdx(nextIdx);
       setInput('');
-      const nextQ = questions[nextIdx];
+      const nextQ = questions[nextIdx]; // nextQ is now the item itself
       setMessages(msgs => [
         ...msgs,
-        { sender: 'bot', text: makeConversational(nextQ.item.text) }
+        { sender: 'bot', text: makeConversational(nextQ.text) } // Use nextQ.text
       ]);
       // Set phase based on next question type
-      const opts = getAnswerOptions(nextQ.item);
-      if (nextQ.item.type === 'choice' && opts && opts.length > 0) {
+      const opts = getAnswerOptions(nextQ); // Use nextQ
+      if (nextQ.type === 'choice' && opts && opts.length > 0) { // Use nextQ.type
         setPhase('awaiting_score');
       } else {
         setPhase('awaiting_free_text');
@@ -1197,7 +1217,7 @@ function CatalogPage() {
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [showSummary, setShowSummary] = useState(false);
-  const [interviewModes, setInterviewModes] = useState<{ [id: string]: 'step' | 'llm-full' }>({});
+  const [interviewModes, setInterviewModes] = useState<{ [id: string]: 'step' | 'llm-full-interview' }>({});
   const navigate = useNavigate();
 
   const refresh = () => setCatalog(loadCatalog());
@@ -1286,8 +1306,8 @@ function CatalogPage() {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={interviewModes[q.id] === 'llm-full'}
-                      onChange={e => setInterviewModes(m => ({ ...m, [q.id]: e.target.checked ? 'llm-full' : 'step' }))}
+                      checked={interviewModes[q.id] === 'llm-full-interview'}
+                      onChange={e => setInterviewModes(m => ({ ...m, [q.id]: e.target.checked ? 'llm-full-interview' : 'step' }))}
                       color="primary"
                     />
                   }

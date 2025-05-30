@@ -9,7 +9,8 @@ const originalScrollIntoView = Element.prototype.scrollIntoView;
 Element.prototype.scrollIntoView = mockScrollIntoView;
 
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { QuestionnaireContext } from './App'; // Assuming context is exported from App.tsx
+// Ensure QuestionnaireContext is imported as a named import.
+import { QuestionnaireContext } from './App'; 
 
 // Mock Element.prototype.scrollIntoView
 Element.prototype.scrollIntoView = jest.fn();
