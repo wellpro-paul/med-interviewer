@@ -295,7 +295,12 @@ export async function generateConversationalTextForItemsBatch(
   }
 }
 
-interface ItemWithTempId extends fhir4.QuestionnaireItem {
+interface ItemWithTempId {
+  linkId?: string;
+  text?: string;
+  conversationalText?: string;
+  type?: string;
+  item?: ItemWithTempId[];
   _tempId?: string; // Temporary id for batch processing
 }
 

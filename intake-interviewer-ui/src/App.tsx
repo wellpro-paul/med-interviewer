@@ -91,7 +91,7 @@ interface QuestionnaireContextType {
   questionnaire: any | null;
   setQuestionnaire: (q: any) => void;
 }
-const QuestionnaireContext = createContext<QuestionnaireContextType>({
+export const QuestionnaireContext = createContext<QuestionnaireContextType>({
   questionnaire: null,
   setQuestionnaire: () => {},
 });
@@ -543,7 +543,7 @@ function ChatPage() {
           setPhase(opts && opts.length > 0 ? 'awaiting_score' : 'awaiting_free_text');
           
           // Initial messages for step-by-step
-          const questionText = firstQ.conversationalText || makeConversational(firstQ.text);
+          const questionText = firstQ.item.conversationalText || makeConversational(firstQ.item.text);
           setMessages([
             { sender: 'bot', text: "Welcome! I'll help you complete your intake. Let's get started." },
             { sender: 'bot', text: questionText }
@@ -1291,7 +1291,7 @@ function CatalogPage() {
                       color="primary"
                     />
                   }
-                  label={interviewModes[q.id] === 'llm-full-interview' ? 'LLM Full Interview' : 'Step-by-Step'}
+                  label={interviewModes[q.id] === 'llm-full' ? 'LLM Full Interview' : 'Step-by-Step'}
                   sx={{ mr: 2 }}
                 />
                 <Button size="small" onClick={() => handleStartChart(q)}>Start Chat</Button> 
