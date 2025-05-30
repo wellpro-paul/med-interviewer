@@ -180,7 +180,7 @@ This document summarizes the approach to testing for the Conversational Medical 
 - Revisit main component tests if/when the test environment or component structure changes.
 
 ## Key Update: Prompt Customization (2024-06)
-- LLM prompts for Markdown-to-FHIR conversion, FHIR export, and conversational phrasing are now loaded from editable text files in `intake-interviewer-ui/public/prompts/`.
+- LLM prompts for Markdown-to-FHIR conversion, FHIR export, and conversational phrasing are now loaded from editable text files in `src/prompts/`.
 - Test that editing these files changes the app's LLM behavior as expected.
 - (Future) Test in-app prompt editing UI when implemented.
 
