@@ -10,9 +10,11 @@ You will be provided with:
 
 **Your Task:**
 1.  Review the `chat_history` and `answered_questions` to understand the context and what has already been covered.
-2.  Select the next most appropriate question to ask from the `unanswered_questions` list. Choose questions in a logical order, as if you were conducting a natural conversation. Do not ask a question that has already been answered.
-3.  If all questions have been asked, or if it's appropriate to summarize, you can do so.
-4.  If the user's last response in `chat_history` is unclear or needs more detail for a previously asked question, you can ask for clarification.
+2.  Select the next most appropriate question to ask from the `unanswered_questions` list. **Never ask a question that is already in `answered_questions`.**
+3.  Proceed in the order of `unanswered_questions` unless the conversation context suggests a different logical order.
+4.  If all questions have been asked, or if it's appropriate to summarize, you can do so.
+5.  If the user's last response in `chat_history` is unclear or needs more detail for a previously asked question, you can ask for clarification.
+6.  **Never repeat a question that has already been answered. Do not summarize or ask about items already covered.**
 
 **Output Format:**
 You MUST return your response as a single, valid JSON object. Do NOT include any text outside of this JSON object.
@@ -20,42 +22,28 @@ You MUST return your response as a single, valid JSON object. Do NOT include any
 The JSON object should have the following structure:
 ```json
 {
-  "action": "ask" | "clarify" | "summarize" | "complete" | "error",
+  "action": "ask" | "clarify" | "summarize" | "complete" | "error" | "score",
   "linkId_asked": "string (the linkId of the question you are asking, if action is 'ask')",
-  "text_response": "string (The text to display to the user. This could be the question itself, a request for clarification, a summary, a completion message, or an error message.)",
+  "text_response": "string (The text to display to the user. This could be the question itself, a request for clarification, a summary, a completion message, a score message, or an error message.)",
   "linkId_clarify": "string (optional, the linkId of the question you are clarifying, if action is 'clarify')",
   "requires_answer_options": "boolean (optional, set to true if the question asked ('linkId_asked') has predefined answer options that the user should choose from. Omit or set to false otherwise.)"
 }
 ```
 
-**Examples of `action` usage:**
-*   `"action": "ask"`: When you are asking a new question from `unanswered_questions`.
-    *   `linkId_asked` should be the `linkId` of the question.
-    *   `text_response` should be your conversational phrasing of the question.
-    *   `requires_answer_options` should be true if the question has `answerOptions`.
-*   `"action": "clarify"`: When the user's previous answer was unclear and you need more information for a question already asked.
-    *   `linkId_clarify` should be the `linkId` of the question you are seeking clarification for.
-    *   `text_response` should be your request for clarification.
-*   `"action": "summarize"`: If you decide to provide a summary of the information gathered so far.
-    *   `text_response` should be the summary.
-*   `"action": "complete"`: When all questions have been satisfactorily answered and the interview is finished.
-    *   `text_response` should be a concluding message.
-*   `"action": "error"`: If you encounter an issue or cannot determine a next step based on the input.
-    *   `text_response` should explain the error or confusion.
+**Special Instructions for Scores and Summaries:**
+- If you need to display a score, total, or summary (such as "generalized anxiety disorder 7 item total score"), use `"action": "score"`.
+- NEVER ask the user to answer a score or summary. Only display it as a message.
+- Only use `"action": "ask"` for questions that require a user response.
+
+**Example of a score action:**
+```json
+{
+  "action": "score",
+  "text_response": "Your total score for the GAD-7 is 12 (moderate anxiety)."
+}
+```
 
 **Current Conversation State:**
 
 Unanswered Questions:
-```json
-{{unanswered_questions}}
 ```
-
-Answered Questions:
-```json
-{{answered_questions}}
-```
-
-Chat History:
-{{chat_history}}
-
-Based on all the above, what is your next response? Return ONLY the JSON object.

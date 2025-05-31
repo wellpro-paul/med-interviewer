@@ -4,7 +4,8 @@
 // LLM service for OpenAI (can be extended for Gemini)
 const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.REACT_APP_GEMINI_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-pro-preview-05-06';
+const GEMINI_MODEL = process.env.REACT_APP_GEMINI_MODEL || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const GEMINI_MODEL_FHIR = process.env.REACT_APP_GEMINI_MODEL_FHIR || process.env.GEMINI_MODEL_FHIR || GEMINI_MODEL;
 
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
@@ -94,6 +95,7 @@ async function loadPrompt(name: string): Promise<string> {
  */
 export async function generateFhirQuestionnaireResponse(transcript: string): Promise<any> {
   const promptTemplate = await loadPrompt('generateFhirQuestionnaireResponse');
+  // eslint-disable-next-line no-template-curly-in-string
   const systemPrompt = promptTemplate.replaceAll('${transcript}', transcript);
   // Gemini does not support 'system' role, so prepend as user message
   const messages = [
@@ -104,7 +106,7 @@ export async function generateFhirQuestionnaireResponse(transcript: string): Pro
     parts: [{ text: msg.content }],
   }));
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_FHIR}:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: 'POST',
       headers: {
@@ -141,6 +143,7 @@ export async function generateFhirQuestionnaireResponse(transcript: string): Pro
  */
 export async function markdownToFhirQuestionnaire(markdown: string): Promise<any> {
   const promptTemplate = await loadPrompt('markdownToFhirQuestionnaire');
+  // eslint-disable-next-line no-template-curly-in-string
   const prompt = promptTemplate.replaceAll('${markdown}', markdown);
   const messages: LLMMessage[] = [{ role: 'user', content: prompt }];
   const response = await callGemini(messages);
@@ -202,8 +205,11 @@ export async function generateConversationalTextForItem(item: any): Promise<stri
     optionsText = `\nAnswer options: ${opts.join(', ')}`;
   }
   const promptTemplate = await loadPrompt('generateConversationalTextForItem');
+  // eslint-disable-next-line no-template-curly-in-string
   const prompt = promptTemplate
+    // eslint-disable-next-line no-template-curly-in-string
     .replaceAll('${item.text}', item.text)
+    // eslint-disable-next-line no-template-curly-in-string
     .replaceAll('${item.type}', item.type)
     .replaceAll('${optionsText}', optionsText);
   const messages: LLMMessage[] = [

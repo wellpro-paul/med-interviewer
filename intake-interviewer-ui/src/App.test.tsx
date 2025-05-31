@@ -1,16 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
-import { fireEvent, waitFor, act } from '@testing-library/react';
-
-// Mock Element.prototype.scrollIntoView
-const mockScrollIntoView = jest.fn();
-const originalScrollIntoView = Element.prototype.scrollIntoView;
-Element.prototype.scrollIntoView = mockScrollIntoView;
+import { fireEvent, waitFor } from '@testing-library/react';
 
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 // Ensure QuestionnaireContext is imported as a named import.
-import { QuestionnaireContext } from './App'; 
+import { QuestionnaireContext } from './App';
+
+// Mock Element.prototype.scrollIntoView
+const mockScrollIntoView = jest.fn();
+Element.prototype.scrollIntoView = mockScrollIntoView; 
 
 // Mock Element.prototype.scrollIntoView
 Element.prototype.scrollIntoView = jest.fn();
@@ -81,17 +80,15 @@ describe('App.tsx - LLM Full Interview Mode', () => {
     // @ts-ignore
     const setQuestionnaire = jest.fn(); // Mock setter for context
     
-    await act(async () => {
-        render(
-        <QuestionnaireContext.Provider value={{ questionnaire, setQuestionnaire }}>
-          <MemoryRouter initialEntries={[{ pathname: '/chat', state: { interviewMode: mode } }]}>
-            <Routes>
-              <Route path="/chat" element={<App />} /> {/* Assuming ChatPage is rendered by App at /chat */}
-            </Routes>
-          </MemoryRouter>
-        </QuestionnaireContext.Provider>
-      );
-    });
+    render(
+      <QuestionnaireContext.Provider value={{ questionnaire, setQuestionnaire }}>
+        <MemoryRouter initialEntries={[{ pathname: '/chat', state: { interviewMode: mode } }]}> 
+          <Routes>
+            <Route path="/chat" element={<App />} /> {/* Assuming ChatPage is rendered by App at /chat */}
+          </Routes>
+        </MemoryRouter>
+      </QuestionnaireContext.Provider>
+    );
     return { setQuestionnaire };
   };
 
@@ -107,12 +104,8 @@ describe('App.tsx - LLM Full Interview Mode', () => {
     await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
     
     // Verify initial welcome message from App.tsx and then the first LLM question
-    await waitFor(() => {
-      expect(screen.getByText("Welcome! I'll conduct this intake interview conversationally. Let's get started.")).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getByText('LLM First Question: Question 1 Text?')).toBeInTheDocument();
-    });
+    await screen.findByText("Welcome! I'll conduct this intake interview conversationally. Let's get started.");
+    await screen.findByText('LLM First Question: Question 1 Text?');
 
     // Verify conductFullQuestionnaireInterview was called correctly for initialization
     expect(mockLlmService.conductFullQuestionnaireInterview).toHaveBeenCalledTimes(1);
@@ -137,18 +130,16 @@ describe('App.tsx - LLM Full Interview Mode', () => {
 
     await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
     
-    await waitFor(() => expect(screen.getByText('LLM Q1?')).toBeInTheDocument());
+    await screen.findByText('LLM Q1?');
 
     const inputElement = screen.getByPlaceholderText('Type your answer...');
     const sendButton = screen.getByRole('button', { name: /send/i });
 
-    await act(async () => {
-      fireEvent.change(inputElement, { target: { value: 'User Answer to Q1' } });
-      fireEvent.click(sendButton);
-    });
+    fireEvent.change(inputElement, { target: { value: 'User Answer to Q1' } });
+    fireEvent.click(sendButton);
 
-    await waitFor(() => expect(screen.getByText('User Answer to Q1')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('LLM Q2?')).toBeInTheDocument());
+    await screen.findByText('User Answer to Q1');
+    await screen.findByText('LLM Q2?');
     
     expect(mockLlmService.conductFullQuestionnaireInterview).toHaveBeenCalledTimes(2);
     // Check arguments of the second call (the one from handleLlmFullInterview)
@@ -175,18 +166,16 @@ describe('App.tsx - LLM Full Interview Mode', () => {
 
 
     await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
-    await waitFor(() => expect(screen.getByText('LLM Q1?')).toBeInTheDocument());
+    await screen.findByText('LLM Q1?');
 
     const inputElement = screen.getByPlaceholderText('Type your answer...');
     const sendButton = screen.getByRole('button', { name: /send/i });
 
-    await act(async () => {
-      fireEvent.change(inputElement, { target: { value: 'User Final Answer' } });
-      fireEvent.click(sendButton);
-    });
+    fireEvent.change(inputElement, { target: { value: 'User Final Answer' } });
+    fireEvent.click(sendButton);
     
-    await waitFor(() => expect(screen.getByText('User Final Answer')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('Interview complete! Thanks.')).toBeInTheDocument());
+    await screen.findByText('User Final Answer');
+    await screen.findByText('Interview complete! Thanks.');
     
     // Verify interview completion UI if any (e.g., input disabled)
     expect(inputElement).toBeDisabled();
@@ -210,18 +199,16 @@ describe('App.tsx - LLM Full Interview Mode', () => {
       .mockResolvedValueOnce(errorLLMResponse);
 
     await renderChatPageWithMode(mockQuestionnaire, 'llm-full-interview');
-    await waitFor(() => expect(screen.getByText('LLM Q1?')).toBeInTheDocument());
+    await screen.findByText('LLM Q1?');
 
     const inputElement = screen.getByPlaceholderText('Type your answer...');
     const sendButton = screen.getByRole('button', { name: /send/i });
 
-    await act(async () => {
-      fireEvent.change(inputElement, { target: { value: 'User input causing error' } });
-      fireEvent.click(sendButton);
-    });
+    fireEvent.change(inputElement, { target: { value: 'User input causing error' } });
+    fireEvent.click(sendButton);
 
-    await waitFor(() => expect(screen.getByText('User input causing error')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('Sorry, an LLM error occurred.')).toBeInTheDocument());
+    await screen.findByText('User input causing error');
+    await screen.findByText('Sorry, an LLM error occurred.');
     // Input should still be enabled for user to try again or for app to offer other options
     expect(inputElement).not.toBeDisabled(); 
   });

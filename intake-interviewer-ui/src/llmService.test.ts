@@ -1,8 +1,8 @@
 import { LLMMessage } from './llmService'; // Keep the type import
 
 // Mock the entire llmService module
-const mockCallOpenAI = jest.fn();
-const mockCallGemini = jest.fn();
+// const mockCallOpenAI = jest.fn();
+// const mockCallGemini = jest.fn();
 const mockGenerateFhirQuestionnaireResponse = jest.fn();
 const mockSendMessageToLLM = jest.fn(); // Mock sendMessageToLLM itself
 
@@ -333,7 +333,6 @@ describe('llmService', () => {
     // Tests for generateFhirQuestionnaireResponse, relying on the mocked callGemini
     const mockTranscript = 'Patient says: Feeling good. Interviewer asks: Any headaches? Patient says: No.';
     const mockFhirJson = { resourceType: 'QuestionnaireResponse', status: 'completed' };
-    const mockResponseText = JSON.stringify(mockFhirJson);
 
     // This test uses the mocked generateFhirQuestionnaireResponse from the top of the file
     test('should call the mocked generateFhirQuestionnaireResponse', async () => {

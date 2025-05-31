@@ -79,6 +79,7 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
     - `fullQuestionnaireInterview.txt`: For managing the "LLM Full Interview" mode, now updated for structured JSON I/O and richer context.
 - To customize the app's behavior, simply edit the relevant `.txt` files in `public/prompts/`.
 - **Future:** The app may include a UI for editing these prompts directly from the browser (admin-only feature).
+- - The full interview prompt now requires the LLM to output a structured JSON object with an `action` field. For score or summary messages, the LLM uses `"action": "score"`, and the app will display these as bot messages (not as questions). This prevents the app from prompting the user to answer scores or summaries.
 
 ## Extensibility
 - Supports fully coded (FHIR/LOINC), freeform (Markdown), and PDF-extracted questionnaires.
@@ -134,3 +135,19 @@ This is a prototype of a conversational medical intake app. It uses a chat inter
 - The Import page is now at /import.
 - Unknown routes redirect to Home.
 - Uses Vite and vite-plugin-raw to import and render Markdown as the landing page.
+
+## Environment Variables
+
+Create a `.env` file in `intake-interviewer-ui/` with the following (example):
+
+```
+REACT_APP_GEMINI_API_KEY=your-gemini-api-key-here
+REACT_APP_OPENAI_API_KEY=your-openai-api-key-here
+REACT_APP_GEMINI_MODEL=gemini-2.0-flash           # Used for chat/interview (fast)
+REACT_APP_GEMINI_MODEL_FHIR=gemini-2.5-pro-preview-05-06  # Used for FHIR conversion (robust)
+REACT_APP_TTS_API_KEY=your-tts-api-key-here       # (Optional) For future Text-to-Speech feature
+```
+
+- `REACT_APP_GEMINI_MODEL` sets the Gemini model for chat/interview (default: `gemini-2.0-flash`).
+- `REACT_APP_GEMINI_MODEL_FHIR` sets the Gemini model for FHIR conversion (default: falls back to `REACT_APP_GEMINI_MODEL`).
+- You can tune these for speed/quality as needed.

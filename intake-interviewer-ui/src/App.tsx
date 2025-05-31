@@ -1,5 +1,6 @@
+import theme from './theme';
 import React, { useState, useRef, createContext, useContext } from 'react';
-import { Box, Container, Paper, Typography, TextField, IconButton, ListItem, ListItemText, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, List as MUIList, Button, Tabs, Tab, DialogActions, TextField as MUITextField, Snackbar, Alert, Switch, FormControlLabel } from '@mui/material';
+import { Box, Container, Paper, Typography, TextField, IconButton, ListItem, ListItemText, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, List as MUIList, Button, Tabs, Tab, DialogActions, TextField as MUITextField, Snackbar, Alert, Switch, FormControlLabel, ThemeProvider, CssBaseline } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { sendMessageToLLM, LLMMessage, generateFhirQuestionnaireResponse, markdownToFhirQuestionnaire, conductFullQuestionnaireInterview } from './llmService';
 import { saveAs } from 'file-saver';
@@ -11,7 +12,6 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import JSZip from 'jszip';
 // @ts-ignore
 import * as pdfjsLib from 'pdfjs-dist';
-// Set workerSrc for pdfjs after all imports
 // @ts-ignore
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
@@ -370,6 +370,12 @@ function flattenQuestions(items: any[]): any[] {
   items.forEach(item => {
     if (!item) return; 
 
+    // Exclude summary/score items (e.g., total score)
+    const isScoreItem =
+      (item.text && /total score|summary/i.test(item.text)) ||
+      (item.code && Array.isArray(item.code) && item.code.some((c: any) => /score|summary/i.test(c.display || c.code || '')));
+    if (isScoreItem) return;
+
     if (item.type === 'group') {
       if (item.item) {
         flat = flat.concat(flattenQuestions(item.item)); 
@@ -623,24 +629,25 @@ function ChatPage() {
         setAnsweredLlmQuestions(tempAnsweredLlmQuestions); // Update state
       }
     }
-    
-    // Prepare data for the LLM
+    // Remove answered question from unanswered list
     const unanswered = flatQuestions
-      .filter(q => !tempAnsweredLlmQuestions[q.linkId]) // Filter out questions that are now answered
+      .filter(q => !tempAnsweredLlmQuestions[q.linkId])
       .map(q => ({ 
         linkId: q.linkId, 
         text: q.text, 
         type: q.type, 
         answerOptions: q.answerOptions || [] 
       }));
-      
     const answered = Object.values(tempAnsweredLlmQuestions);
-
     // Create chat history from the last N messages including the current user message
     const currentChatHistory = messages.concat([userMessage]) 
       .slice(-10) // Take up to the last 10 messages for context
       .map(m => `${m.sender === 'bot' ? 'Interviewer' : 'Patient'}: ${m.text}`)
       .join('\n');
+    // Debug logging for LLM context
+    console.log('LLM DEBUG: answered_questions', answered);
+    console.log('LLM DEBUG: unanswered_questions', unanswered);
+    console.log('LLM DEBUG: chat_history', currentChatHistory);
 
     try {
       const responseJson = await conductFullQuestionnaireInterview(unanswered, answered, currentChatHistory);
@@ -661,6 +668,11 @@ function ChatPage() {
           case 'summarize':
             // No specific state change here beyond showing the summary.
             // LLM might ask for confirmation or proceed.
+            break;
+          case 'score':
+            // Display the score message, do not prompt for user input, do not set currentLlmQuestionLinkId
+            setCurrentLlmQuestionLinkId(null);
+            // No state change needed, just show the message
             break;
           case 'complete':
             setIsLlmInterviewActive(false);
@@ -773,6 +785,17 @@ function ChatPage() {
     setMessages(msgs => [...msgs, { sender: 'bot', text: botReply }]);
     setPhase('awaiting_free_text');
     inputRef.current?.focus();
+
+    // Debug logging for step-by-step LLM context
+    const stepAnswered = Object.entries(answerScores).map(([linkId, answer]) => ({ linkId, answer }));
+    const stepUnanswered = questions.filter(q => !(q.linkId in answerScores)).map(q => ({ linkId: q.linkId, text: q.text, type: q.type, answerOptions: getAnswerOptions(q) || [] }));
+    const stepChatHistory = messages
+      .map(m => `${m.sender === 'bot' ? 'Interviewer' : 'Patient'}: ${m.text}`)
+      .concat([`Patient: ${userInput}`])
+      .join('\n');
+    console.log('LLM DEBUG (step-by-step): answered_questions', stepAnswered);
+    console.log('LLM DEBUG (step-by-step): unanswered_questions', stepUnanswered);
+    console.log('LLM DEBUG (step-by-step): chat_history', stepChatHistory);
   };
 
   // Handle score selection (button or typed)
@@ -848,6 +871,12 @@ function ChatPage() {
     } else {
       setCompleted(true);
       setPhase('completed');
+      // Calculate and display total score as a bot message
+      const totalScore = Object.values(answerScores).reduce((a, b) => a + b, 0);
+      setMessages(msgs => [
+        ...msgs,
+        { sender: 'bot', text: `Your GAD-7 total score is ${totalScore}.` }
+      ]);
     }
     inputRef.current?.focus();
   };
@@ -872,153 +901,156 @@ function ChatPage() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h5">Chat Interview</Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>Questionnaire loaded: <b>{questionnaire?.title || 'Untitled'}</b></Typography>
-        <Box sx={{ minHeight: 300, mb: 2 }}>
-          {messages.map((msg, idx) => (
-            <Box key={idx} sx={{ textAlign: msg.sender === 'user' ? 'right' : 'left', my: 1 }}>
-              <Paper sx={{ display: 'inline-block', px: 2, py: 1, bgcolor: msg.sender === 'user' ? 'primary.light' : 'grey.100', color: msg.sender === 'user' ? 'white' : 'black' }}>
-                <Typography variant="body2">{msg.text}</Typography>
-              </Paper>
-            </Box>
-          ))}
-        </Box>
-        {/* Input form: Main interaction point */}
-        {/* Show input form if the interview is not completed.
-            The behavior of the form submission is conditional on isLlmInterviewActive.
-            The phase 'awaiting_free_text' is primarily for step-by-step mode's turn-based input.
-            For LLM full interview, it's always "free text" from the user's perspective.
-        */}
-        {!completed && (
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              const trimmedInput = input.trim();
-              if (!trimmedInput) return;
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Typography variant="h5">Chat Interview</Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>Questionnaire loaded: <b>{questionnaire?.title || 'Untitled'}</b></Typography>
+          <Box sx={{ minHeight: 300, mb: 2 }}>
+            {messages.map((msg, idx) => (
+              <Box key={idx} sx={{ textAlign: msg.sender === 'user' ? 'right' : 'left', my: 1 }}>
+                <Paper sx={{ display: 'inline-block', px: 2, py: 1, bgcolor: msg.sender === 'user' ? 'primary.light' : 'grey.100', color: msg.sender === 'user' ? 'white' : 'black' }}>
+                  <Typography variant="body2">{msg.text}</Typography>
+                </Paper>
+              </Box>
+            ))}
+          </Box>
+          {/* Input form: Main interaction point */}
+          {/* Show input form if the interview is not completed.
+              The behavior of the form submission is conditional on isLlmInterviewActive.
+              The phase 'awaiting_free_text' is primarily for step-by-step mode's turn-based input.
+              For LLM full interview, it's always "free text" from the user's perspective.
+          */}
+          {!completed && (
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                const trimmedInput = input.trim();
+                if (!trimmedInput) return;
 
-              if (isLlmInterviewActive) {
-                handleLlmFullInterview(trimmedInput);
-              } else {
-                // Step-by-step mode: only submit if in 'awaiting_free_text' phase.
-                // Other phases (e.g., 'awaiting_score') are handled by button clicks.
-                if (phase === 'awaiting_free_text') {
-                  handleTextSubmit(e); 
+                if (isLlmInterviewActive) {
+                  handleLlmFullInterview(trimmedInput);
+                } else {
+                  // Step-by-step mode: only submit if in 'awaiting_free_text' phase.
+                  // Other phases (e.g., 'awaiting_score') are handled by button clicks.
+                  if (phase === 'awaiting_free_text') {
+                    handleTextSubmit(e); 
+                  }
                 }
-              }
-            }}
-            style={{ display: 'flex', gap: 8, marginBottom: 16 }}
-          >
-            <TextField
-              inputRef={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="Type your answer..."
-              fullWidth
-              autoFocus
-              // Disable input if interview is completed OR if LLM is currently processing a response
-              // Also disable if in step-by-step and not awaiting free text (e.g. awaiting score selection)
-              disabled={completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
-            />
-            <IconButton 
-              type="submit" 
-              color="primary" 
-              // Disable button if input is empty, interview completed, LLM is loading,
-              // or in step-by-step and not awaiting free text.
-              disabled={!input.trim() || completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
-              aria-label="send"
+              }}
+              style={{ display: 'flex', gap: 8, marginBottom: 16 }}
             >
-              <SendIcon />
-            </IconButton>
-          </form>
-        )}
-
-        {/* UI Elements specific to STEP-BY-STEP mode */}
-        {/* These are hidden if isLlmInterviewActive is true. */}
-        {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > 0 && currentAnswerOptions.length <= CHIPS_THRESHOLD && (
-          <>
-            {/* Friendly prompt for ambiguous answers */}
-            <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
-            <ScoreInput
-              disabled={false}
-              onSelect={handleScoreSelect}
-              answerOptions={currentAnswerOptions}
-              renderSkipButton={
-                <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
-              }
-            />
-          </>
-        )}
-        {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > CHIPS_THRESHOLD && ( 
-          <>
-            {/* Friendly prompt for ambiguous answers */}
-            <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
-            <ScoreInput
-              disabled={false}
-              onSelect={handleScoreSelect}
-              answerOptions={currentAnswerOptions}
-              renderSkipButton={
-                <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
-              }
-            />
-            <form onSubmit={handleTypedScore} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <TextField
+                inputRef={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder={currentAnswerOptions && currentAnswerOptions.length > 0 ? "Type your answer or select an option..." : "Type a score (0-4)..."}
+                placeholder="Type your answer..."
                 fullWidth
                 autoFocus
-                disabled={completed}
+                // Disable input if interview is completed OR if LLM is currently processing a response
+                // Also disable if in step-by-step and not awaiting free text (e.g. awaiting score selection)
+                disabled={completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
               />
-              <IconButton
-                type="submit"
-                color="primary"
-                disabled={completed || (currentAnswerOptions && currentAnswerOptions.length > 0 ? !input.trim() : !input.match(/^[0-4]$/))}
+              <IconButton 
+                type="submit" 
+                color="primary" 
+                // Disable button if input is empty, interview completed, LLM is loading,
+                // or in step-by-step and not awaiting free text.
+                disabled={!input.trim() || completed || isLlmLoading || (!isLlmInterviewActive && phase !== 'awaiting_free_text')}
                 aria-label="send"
               >
                 <SendIcon />
               </IconButton>
             </form>
-          </>
-        )}
-        {/* End Chat Early Button (debug) */}
-        {!completed && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-            <Button
-              size="small"
-              variant="outlined"
-              color="secondary"
-              startIcon={<BugReportIcon fontSize="small" />}
-              onClick={() => setEndEarlyDialogOpen(true)}
-              sx={{ textTransform: 'none' }}
-            >
-              End Chat Early
-            </Button>
-          </Box>
-        )}
-        <Dialog open={endEarlyDialogOpen} onClose={() => setEndEarlyDialogOpen(false)}>
-          <DialogTitle>End Chat Early?</DialogTitle>
-          <DialogContent>
-            <Typography>Are you sure you want to end the chat early? The chat so far will be saved and logged.</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEndEarlyDialogOpen(false)} color="primary">Cancel</Button>
-            <Button onClick={handleEndChatEarly} color="secondary" variant="contained" autoFocus>End Chat</Button>
-          </DialogActions>
-        </Dialog>
-        {completed && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6">Interview Complete!</Typography>
-            <Typography variant="subtitle1">Grand Total: {grandTotal}</Typography>
-            <Typography sx={{ mt: 2 }}>Thank you for completing the intake!</Typography>
-            {savingFhir && <Typography sx={{ mt: 2 }} color="primary">Saving log and exporting FHIR...</Typography>}
-            {fhirError && <Typography sx={{ mt: 2 }} color="error">{fhirError}</Typography>}
-            {logSaved && !savingFhir && !fhirError && <Typography sx={{ mt: 2 }} color="success.main">Session log saved!</Typography>}
-          </Box>
-        )}
-      </Paper>
-    </Container>
+          )}
+
+          {/* UI Elements specific to STEP-BY-STEP mode */}
+          {/* These are hidden if isLlmInterviewActive is true. */}
+          {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > 0 && currentAnswerOptions.length <= CHIPS_THRESHOLD && (
+            <>
+              {/* Friendly prompt for ambiguous answers */}
+              <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
+              <ScoreInput
+                disabled={false}
+                onSelect={handleScoreSelect}
+                answerOptions={currentAnswerOptions}
+                renderSkipButton={
+                  <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
+                }
+              />
+            </>
+          )}
+          {!isLlmInterviewActive && phase === 'awaiting_score' && currentQ && !completed && currentAnswerOptions && currentAnswerOptions.length > CHIPS_THRESHOLD && ( 
+            <>
+              {/* Friendly prompt for ambiguous answers */}
+              <Paper sx={{ mb: 2, p: 2, fontSize: 18, textAlign: 'center' }}>Please choose one of these options:</Paper>
+              <ScoreInput
+                disabled={false}
+                onSelect={handleScoreSelect}
+                answerOptions={currentAnswerOptions}
+                renderSkipButton={
+                  <Button variant="outlined" color="secondary" onClick={() => handleScoreSelect(null)} aria-label="Skip this question">Skip</Button>
+                }
+              />
+              <form onSubmit={handleTypedScore} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <TextField
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={currentAnswerOptions && currentAnswerOptions.length > 0 ? "Type your answer or select an option..." : "Type a score (0-4)..."}
+                  fullWidth
+                  autoFocus
+                  disabled={completed}
+                />
+                <IconButton
+                  type="submit"
+                  color="primary"
+                  disabled={completed || (currentAnswerOptions && currentAnswerOptions.length > 0 ? !input.trim() : !input.match(/^[0-4]$/))}
+                  aria-label="send"
+                >
+                  <SendIcon />
+                </IconButton>
+              </form>
+            </>
+          )}
+          {/* End Chat Early Button (debug) */}
+          {!completed && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="secondary"
+                startIcon={<BugReportIcon fontSize="small" />}
+                onClick={() => setEndEarlyDialogOpen(true)}
+                sx={{ textTransform: 'none' }}
+              >
+                End Chat Early
+              </Button>
+            </Box>
+          )}
+          <Dialog open={endEarlyDialogOpen} onClose={() => setEndEarlyDialogOpen(false)}>
+            <DialogTitle>End Chat Early?</DialogTitle>
+            <DialogContent>
+              <Typography>Are you sure you want to end the chat early? The chat so far will be saved and logged.</Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setEndEarlyDialogOpen(false)} color="primary">Cancel</Button>
+              <Button onClick={handleEndChatEarly} color="secondary" variant="contained" autoFocus>End Chat</Button>
+            </DialogActions>
+          </Dialog>
+          {completed && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6">Interview Complete!</Typography>
+              <Typography variant="subtitle1">Grand Total: {grandTotal}</Typography>
+              <Typography sx={{ mt: 2 }}>Thank you for completing the intake!</Typography>
+              {savingFhir && <Typography sx={{ mt: 2 }} color="primary">Saving log and exporting FHIR...</Typography>}
+              {fhirError && <Typography sx={{ mt: 2 }} color="error">{fhirError}</Typography>}
+              {logSaved && !savingFhir && !fhirError && <Typography sx={{ mt: 2 }} color="success.main">Session log saved!</Typography>}
+            </Box>
+          )}
+        </Paper>
+      </Container>
+    </ThemeProvider>
   );
 }
 
@@ -1355,29 +1387,33 @@ function App() {
     location.pathname === '/logs' ? 4 : 0;
 
   return (
-    <QuestionnaireContext.Provider value={{ questionnaire, setQuestionnaire }}>
-      <AppBar position="static" color="primary">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>Medical Intake Interview</Typography>
-          <Tabs value={tabValue} textColor="inherit" indicatorColor="secondary">
-            <Tab label="Home" component={Link} to="/" />
-            <Tab label="Import" component={Link} to="/import" />
-            <Tab label="Catalog" component={Link} to="/catalog" />
-            <Tab label="Chat" component={Link} to="/chat" />
-            <Tab label="Logs" component={Link} to="/logs" />
-          </Tabs>
-        </Toolbar>
-      </AppBar>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/import" element={<ImportPage />} />
-        <Route path="/catalog" element={<CatalogPage />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/logs" element={<LogsPage />} />
-        <Route path="*" element={<HomePage />} />
-      </Routes>
-    </QuestionnaireContext.Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <QuestionnaireContext.Provider value={{ questionnaire, setQuestionnaire }}>
+        <AppBar position="static" color="primary">
+          <Toolbar>
+            <Box component="img" src="/wellpro-logo.png" alt="WellPro Logo" sx={{ height: 40, mr: 2 }} />
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>Medical Intake Interview</Typography>
+            <Tabs value={tabValue} textColor="inherit" indicatorColor="secondary">
+              <Tab label="Home" component={Link} to="/" />
+              <Tab label="Import" component={Link} to="/import" />
+              <Tab label="Catalog" component={Link} to="/catalog" />
+              <Tab label="Chat" component={Link} to="/chat" />
+              <Tab label="Logs" component={Link} to="/logs" />
+            </Tabs>
+          </Toolbar>
+        </AppBar>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/import" element={<ImportPage />} />
+          <Route path="/catalog" element={<CatalogPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/logs" element={<LogsPage />} />
+          <Route path="*" element={<HomePage />} />
+        </Routes>
+      </QuestionnaireContext.Provider>
+    </ThemeProvider>
   );
 }
 
